@@ -62,6 +62,14 @@ const Sidebar = () => {
         >
           Reportes
         </NavLink>
+        <NavLink
+          to={ROUTES.IMPORTAR}
+          className={({ isActive }) =>
+            isActive ? "sidebar-link active" : "sidebar-link"
+          }
+        >
+          Importar
+        </NavLink>
       </nav>
 
       <button className="sidebar-logout" onClick={handleLogout}>
