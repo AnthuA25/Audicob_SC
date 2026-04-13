@@ -17,10 +17,28 @@ public class ClienteRepository : IClienteRepository
         if (!string.IsNullOrWhiteSpace(filtro))
         {
             filtro = filtro.ToLower();
-            query = query.Where(c => c.nombres.ToLower().Contains(filtro) || 
-                                     c.apellidos.ToLower().Contains(filtro) || 
+            query = query.Where(c => c.nombres.ToLower().Contains(filtro) ||
+                                     c.apellidos.ToLower().Contains(filtro) ||
                                      c.dni.Contains(filtro));
         }
+        return await query.ToListAsync();
+    }
+
+    // HU11 - Listado por Asesor
+    public async Task<IEnumerable<Cliente>> ObtenerPorAsesorAsync(int idAsesor, string? filtro)
+    {
+        var query = _context.Clientes
+            .Where(c => c.id_asesor == idAsesor && !c.eliminado && c.activo)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(filtro))
+        {
+            filtro = filtro.ToLower();
+            query = query.Where(c => c.nombres.ToLower().Contains(filtro) ||
+                                     c.apellidos.ToLower().Contains(filtro) ||
+                                     c.dni.Contains(filtro));
+        }
+
         return await query.ToListAsync();
     }
 }
