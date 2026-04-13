@@ -1,4 +1,15 @@
 import { NavLink, useNavigate } from "react-router-dom";
+import {
+  LayoutDashboard,
+  UserRound,
+  Users,
+  AlertTriangle,
+  Bell,
+  BarChart2,
+  Upload,
+  LogOut,
+} from "lucide-react";
+
 import useAuth from "../../hooks/useAuth";
 import { ROUTES } from "../../constants/routes";
 
@@ -20,7 +31,7 @@ const Sidebar = () => {
             isActive ? "sidebar-link active" : "sidebar-link"
           }
         >
-          Dashboard
+          <LayoutDashboard size={18} /> Dashboard
         </NavLink>
         <NavLink
           to={ROUTES.ASESORES}
@@ -28,7 +39,7 @@ const Sidebar = () => {
             isActive ? "sidebar-link active" : "sidebar-link"
           }
         >
-          Asesores
+          <UserRound size={18} /> Asesores
         </NavLink>
         <NavLink
           to={ROUTES.CLIENTES}
@@ -36,7 +47,7 @@ const Sidebar = () => {
             isActive ? "sidebar-link active" : "sidebar-link"
           }
         >
-          Clientes
+          <Users size={18} /> Clientes
         </NavLink>
         <NavLink
           to={ROUTES.MOROSIDAD}
@@ -44,7 +55,7 @@ const Sidebar = () => {
             isActive ? "sidebar-link active" : "sidebar-link"
           }
         >
-          Morosidad
+          <AlertTriangle size={18} /> Morosidad
         </NavLink>
         <NavLink
           to={ROUTES.ALERTAS}
@@ -52,7 +63,7 @@ const Sidebar = () => {
             isActive ? "sidebar-link active" : "sidebar-link"
           }
         >
-          Alertas
+          <Bell size={18} /> Alertas
         </NavLink>
         <NavLink
           to={ROUTES.REPORTES}
@@ -60,7 +71,7 @@ const Sidebar = () => {
             isActive ? "sidebar-link active" : "sidebar-link"
           }
         >
-          Reportes
+          <BarChart2 size={18} /> Reportes
         </NavLink>
         <NavLink
           to={ROUTES.IMPORTAR}
@@ -68,12 +79,12 @@ const Sidebar = () => {
             isActive ? "sidebar-link active" : "sidebar-link"
           }
         >
-          Importar
+          <Upload size={18} /> Importar
         </NavLink>
       </nav>
 
       <button className="sidebar-logout" onClick={handleLogout}>
-        Cerrar Sesión
+        <LogOut size={18} /> Cerrar Sesión
       </button>
     </div>
   );

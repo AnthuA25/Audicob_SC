@@ -1,3 +1,4 @@
+import { UserRound, Users, BadgeDollarSign, TrendingUp } from "lucide-react";
 import useDashboard from "../../hooks/useDashboard";
 import MetricCard from "../../components/dashboard/MetricCard";
 import CobranzaLineChart from "../../components/dashboard/CobranzaLineChart";
@@ -77,25 +78,25 @@ const DashboardAdminPage = () => {
 
       <div className="metricas-grid">
         <MetricCard
-          icono="👤"
+          icono={<UserRound size={20} color="#6366f1" />}
           valor={m.totalAsesores}
           label="Total de Asesores"
           variacion={m.variacionAsesores}
         />
         <MetricCard
-          icono="👥"
+          icono={<Users size={20} color="#22c55e" />}
           valor={m.totalClientes}
           label="Total de Clientes"
           variacion={m.variacionClientes}
         />
         <MetricCard
-          icono="S./"
+          icono={<BadgeDollarSign size={20} color="#a855f7" />}
           valor={m.cobranzaTotal}
           label="Cobranza Total"
           variacion={m.variacionCobranza}
         />
         <MetricCard
-          icono="📈"
+          icono={<TrendingUp size={20} color="#f97316" />}
           valor={m.eficienciaGlobal}
           label="Eficiencia Global"
           variacion={m.variacionEficiencia}

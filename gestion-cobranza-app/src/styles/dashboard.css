@@ -60,6 +60,12 @@
 
 .navbar-user {
   display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.navbar-user-info {
+  display: flex;
   flex-direction: column;
   align-items: flex-end;
 }
@@ -288,4 +294,63 @@
 .estado-regular {
   background: #fffbeb;
   color: #d97706;
+}
+.sidebar-icon {
+  font-size: 16px;
+  margin-right: 8px;
+}
+.navbar-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.navbar-search-icon {
+  position: absolute;
+  left: 12px;
+  color: #94a3b8;
+}
+
+.navbar-search input {
+  width: 320px;
+  height: 38px;
+  padding: 0 16px 0 36px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #374151;
+  background: #f8fafc;
+  outline: none;
+}
+
+.navbar-search input:focus {
+  border-color: #3b82f6;
+}
+
+.navbar-notif {
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.notif-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  background: #ef4444;
+  border-radius: 50%;
+  border: 1.5px solid #ffffff;
+}
+.metric-icon-container {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
 }
