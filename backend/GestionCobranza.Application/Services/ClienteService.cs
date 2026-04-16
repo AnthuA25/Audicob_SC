@@ -40,4 +40,27 @@ public class ClienteService : IClienteService
             c.estado_cliente ?? "" // 7: Estado
         ));
     }
+
+    // HU12: Detalle del Cliente
+    public async Task<ClienteDetalleDto?> ObtenerDetalleClienteAsync(int id)
+    {
+        var cliente = await _repository.ObtenerDetalleCompletoAsync(id);
+        if (cliente == null) return null;
+
+        return new ClienteDetalleDto
+        {
+            IdCliente = cliente.id_cliente,
+            NombreCompleto = $"{cliente.nombres} {cliente.apellidos}", // Conversación #4
+            Dni = cliente.dni,
+            Riesgo = cliente.riesgo,
+            // Sumamos el saldo pendiente de sus deudas no eliminadas
+            DeudaTotal = cliente.Deudas.Where(d => !d.eliminado).Sum(d => d.saldo_pendiente),
+            Gestiones = cliente.Gestiones.Where(g => !g.eliminado).Select(g => new GestionHistorialDto
+            {
+                Fecha = g.fecha_gestion,
+                Accion = g.tipo_gestion, // Usamos tipo_gestion de tu tabla
+                Comentario = g.descripcion // Usamos descripcion de tu tabla
+            }).OrderByDescending(g => g.Fecha).ToList()
+        };
+    }
 }

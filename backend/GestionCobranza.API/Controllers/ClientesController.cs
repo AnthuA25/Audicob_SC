@@ -32,4 +32,18 @@ public class ClientesController : ControllerBase
 
         return Ok(result);
     }
+
+    // HU12 - Detalle del Cliente
+    [HttpGet("{id}/detalle")]
+    public async Task<ActionResult<ClienteDetalleDto>> GetDetalle(int id)
+    {
+        var detalle = await _service.ObtenerDetalleClienteAsync(id);
+
+        if (detalle == null)
+        {
+            return NotFound("El cliente no existe o ha sido eliminado.");
+        }
+
+        return Ok(detalle);
+    }
 }

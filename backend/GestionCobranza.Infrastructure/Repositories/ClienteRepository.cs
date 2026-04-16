@@ -41,4 +41,13 @@ public class ClienteRepository : IClienteRepository
 
         return await query.ToListAsync();
     }
+
+    //HU12 - Detalle del Cliente
+    public async Task<Cliente?> ObtenerDetalleCompletoAsync(int id)
+    {
+        return await _context.Clientes
+            .Include(c => c.Deudas)      // Relación con tabla deuda
+            .Include(c => c.Gestiones)   // Relación con tabla gestion
+            .FirstOrDefaultAsync(c => c.id_cliente == id && !c.eliminado);
+    }
 }

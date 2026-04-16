@@ -36,4 +36,6 @@ public class Cliente
 
     public bool activo { get; set; } = true;
     public bool eliminado { get; set; } = false;
+    public virtual ICollection<Deuda> Deudas { get; set; } = new List<Deuda>();
+    public virtual ICollection<Gestion> Gestiones { get; set; } = new List<Gestion>();
 }
