@@ -6,17 +6,41 @@ import {
   eliminarCliente,
 } from "../services/clienteService";
 
+const mapCliente = (c) => ({
+  id: c.idCliente,
+  nombre: `${c.nombres ?? ""} ${c.apellidos ?? ""}`.trim(),
+  nombres: c.nombres ?? "",
+  apellidos: c.apellidos ?? "",
+  email: c.correo ?? "",
+  dni: c.dni ?? "",
+  telefono: c.telefono ?? "",
+  direccion: c.direccion ?? "",
+  idAsesor: c.idAsesor ?? null,
+  asesorAsignado: c.asesor ?? "",
+  riesgo: capitalizar(c.riesgo ?? "BAJO"),
+  estado: capitalizar(c.estadoCliente ?? "NUEVO"),
+  diasAtraso: "",
+});
+
+const capitalizar = (texto) =>
+  texto
+    ? texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase()
+    : "";
+
 const useClientes = () => {
   const [clientes, setClientes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState("");
 
-  const cargarClientes = async () => {
+  const cargarClientes = async (busqueda = "") => {
     try {
-      const data = await fetchClientes();
-      setClientes(data);
+      setLoading(true);
+      const data = await fetchClientes(busqueda);
+      setClientes((data || []).map(mapCliente));
+      setError("");
     } catch (err) {
-      setClientes(clientesEjemplo);
+      setError(err.response?.data?.message || "No se pudieron cargar los clientes.");
+      setClientes([]);
     } finally {
       setLoading(false);
     }
@@ -27,30 +51,22 @@ const useClientes = () => {
   }, []);
 
   const agregarCliente = async (cliente) => {
-    try {
-      const nuevo = await crearCliente(cliente);
-      setClientes((prev) => [...prev, nuevo]);
-    } catch {
-      const nuevo = { ...cliente, id: Date.now() };
-      setClientes((prev) => [...prev, nuevo]);
-    }
+    const response = await crearCliente(cliente);
+    const nuevoCliente = response.cliente ? mapCliente(response.cliente) : mapCliente(response);
+    setClientes((prev) => [...prev, nuevoCliente]);
+    return nuevoCliente;
   };
 
   const editarCliente = async (id, cliente) => {
-    try {
-      const actualizado = await actualizarCliente(id, cliente);
-      setClientes((prev) => prev.map((c) => (c.id === id ? actualizado : c)));
-    } catch {
-      setClientes((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, ...cliente } : c)),
-      );
-    }
+    const response = await actualizarCliente(id, cliente);
+    const actualizado = response.cliente ? mapCliente(response.cliente) : mapCliente(response);
+
+    setClientes((prev) => prev.map((c) => (c.id === id ? actualizado : c)));
+    return actualizado;
   };
 
   const borrarCliente = async (id) => {
-    try {
-      await eliminarCliente(id);
-    } catch {}
+    await eliminarCliente(id);
     setClientes((prev) => prev.filter((c) => c.id !== id));
   };
 
@@ -58,79 +74,11 @@ const useClientes = () => {
     clientes,
     loading,
     error,
+    cargarClientes,
     agregarCliente,
     editarCliente,
     borrarCliente,
   };
 };
-
-const clientesEjemplo = [
-  {
-    id: 1,
-    nombre: "Laura Martínez",
-    email: "maria.lopez@audicob.com",
-    telefono: "+51 555 123 4567",
-    asesorAsignado: "Carlos Rodríguez",
-    deudaPendiente: "S./ 2,000",
-    diasAtraso: 45,
-    riesgo: "Alto",
-    estado: "Contactado",
-  },
-  {
-    id: 2,
-    nombre: "Josmer Jauregui",
-    email: "maria.lopez@audicob.com",
-    telefono: "+51 555 123 4567",
-    asesorAsignado: "María López",
-    deudaPendiente: "S./ 5,500",
-    diasAtraso: 20,
-    riesgo: "Medio",
-    estado: "Negociación",
-  },
-  {
-    id: 3,
-    nombre: "Janett Mendez",
-    email: "maria.lopez@audicob.com",
-    telefono: "+51 555 123 4567",
-    asesorAsignado: "María López",
-    deudaPendiente: "S./ 3,000",
-    diasAtraso: 10,
-    riesgo: "Bajo",
-    estado: "Promesa de Pago",
-  },
-  {
-    id: 4,
-    nombre: "Karla Santos",
-    email: "maria.lopez@audicob.com",
-    telefono: "+51 555 123 4567",
-    asesorAsignado: "Carlos Rodríguez",
-    deudaPendiente: "S./ 0",
-    diasAtraso: 0,
-    riesgo: "Bajo",
-    estado: "Pagado",
-  },
-  {
-    id: 5,
-    nombre: "Karen Silva",
-    email: "maria.lopez@audicob.com",
-    telefono: "+51 555 123 4567",
-    asesorAsignado: "Carlos Rodríguez",
-    deudaPendiente: "S./ 3,500",
-    diasAtraso: 90,
-    riesgo: "Alto",
-    estado: "Moroso",
-  },
-  {
-    id: 6,
-    nombre: "Karen Silva",
-    email: "maria.lopez@audicob.com",
-    telefono: "+51 555 123 4567",
-    asesorAsignado: "Carlos Rodríguez",
-    deudaPendiente: "S./ 800",
-    diasAtraso: 60,
-    riesgo: "Alto",
-    estado: "Contactado",
-  },
-];
 
 export default useClientes;

@@ -6,21 +6,17 @@ import {
 } from "../api/dashboardApi";
 
 export const fetchMetricas = async () => {
-  const data = await getDashboardMetricas();
-  return data;
+  return await getDashboardMetricas();
 };
 
 export const fetchCobranzaEvolucion = async () => {
-  const data = await getCobranzaEvolucion();
-  return data;
+  return await getCobranzaEvolucion();
 };
 
 export const fetchDistribucionClientes = async () => {
-  const data = await getDistribucionClientes();
-  return data;
+  return await getDistribucionClientes();
 };
 
 export const fetchRendimientoAsesores = async () => {
-  const data = await getRendimientoAsesores();
-  return data;
+  return await getRendimientoAsesores();
 };

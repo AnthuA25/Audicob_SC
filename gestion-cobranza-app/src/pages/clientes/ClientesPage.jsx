@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Search, UserPlus, Pencil, Trash2 } from "lucide-react";
 import useClientes from "../../hooks/useClientes";
 import ClienteForm from "../../components/forms/ClienteForm";
@@ -9,8 +9,14 @@ import {
 import "../../styles/clientes.css";
 
 const ClientesPage = () => {
-  const { clientes, agregarCliente, editarCliente, borrarCliente } =
-    useClientes();
+  const {
+    clientes,
+    loading,
+    error,
+    agregarCliente,
+    editarCliente,
+    borrarCliente,
+  } = useClientes();
   const [busqueda, setBusqueda] = useState("");
   const [modalNuevo, setModalNuevo] = useState(false);
   const [clienteEditar, setClienteEditar] = useState(null);
@@ -22,38 +28,50 @@ const ClientesPage = () => {
     setTimeout(() => setToast(""), 3000);
   };
 
-  const clientesFiltrados = clientes.filter(
-    (c) =>
-      c.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-      c.email.toLowerCase().includes(busqueda.toLowerCase()),
-  );
+  const clientesFiltrados = useMemo(() => {
+    return clientes.filter(
+      (c) =>
+        c.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+        c.email.toLowerCase().includes(busqueda.toLowerCase()) ||
+        c.dni.toLowerCase().includes(busqueda.toLowerCase()),
+    );
+  }, [clientes, busqueda]);
 
   const clientesActivos = clientes.filter((c) => c.estado !== "Moroso").length;
   const clientesMorosos = clientes.filter((c) => c.estado === "Moroso").length;
 
   const handleGuardar = async (form) => {
-    if (clienteEditar) {
-      await editarCliente(clienteEditar.id, form);
-      mostrarToast("Cliente actualizado exitosamente");
-      setClienteEditar(null);
-    } else {
-      await agregarCliente(form);
-      mostrarToast("Cliente creado exitosamente");
-      setModalNuevo(false);
+    try {
+      if (clienteEditar) {
+        await editarCliente(clienteEditar.id, {
+          ...form,
+          estadoCliente: clienteEditar.estado?.toUpperCase() || "NUEVO",
+          riesgo: clienteEditar.riesgo?.toUpperCase() || "BAJO",
+        });
+
+        mostrarToast("Cliente actualizado exitosamente");
+        setClienteEditar(null);
+      } else {
+        await agregarCliente(form);
+        mostrarToast("Cliente creado exitosamente");
+        setModalNuevo(false);
+      }
+    } catch (err) {
+      mostrarToast(err.response?.data?.message || "Ocurrió un error.");
     }
   };
 
   const handleEliminar = async () => {
-    await borrarCliente(clienteEliminar.id);
-    mostrarToast("Cliente eliminado exitosamente");
-    setClienteEliminar(null);
+    try {
+      await borrarCliente(clienteEliminar.id);
+      mostrarToast("Cliente eliminado exitosamente");
+      setClienteEliminar(null);
+    } catch (err) {
+      mostrarToast(err.response?.data?.message || "No se pudo eliminar.");
+    }
   };
 
-  const getDiasClass = (dias) => {
-    if (dias >= 60) return "dias-atraso alto";
-    if (dias >= 20) return "dias-atraso medio";
-    return "dias-atraso bajo";
-  };
+  if (loading) return <div>Cargando clientes...</div>;
 
   return (
     <div>
@@ -66,6 +84,7 @@ const ClientesPage = () => {
           <UserPlus size={16} /> Nuevo Cliente
         </button>
       </div>
+      {error && <p style={{ color: "red" }}>{error}</p>}
 
       <div className="clientes-filtros">
         <div className="search-container">
@@ -110,15 +129,17 @@ const ClientesPage = () => {
                 <td>{cliente.nombre}</td>
                 <td>
                   <div className="cliente-contacto">
-                    <span>✉ {cliente.email}</span>
-                    <span>📞 {cliente.telefono}</span>
+                    <span>✉ {cliente.email || "-"}</span>
+                    <span>📞 {cliente.telefono || "-"}</span>
                   </div>
                 </td>
-                <td>{cliente.asesorAsignado}</td>
-                <td>{cliente.deudaPendiente}</td>
+                <td>{cliente.asesorAsignado || "-"}</td>
+                <td>{cliente.deudaPendiente || "-"}</td>
                 <td>
-                  <span className={getDiasClass(cliente.diasAtraso)}>
-                    {cliente.diasAtraso} días
+                  <span className="dias-atraso pendiente">
+                    {cliente.diasAtraso !== ""
+                      ? `${cliente.diasAtraso} días`
+                      : "-"}
                   </span>
                 </td>
                 <td>
@@ -152,6 +173,7 @@ const ClientesPage = () => {
       {(modalNuevo || clienteEditar) && (
         <ClienteForm
           clienteEditar={clienteEditar}
+          clientesExistentes={clientes}
           onGuardar={handleGuardar}
           onCancelar={() => {
             setModalNuevo(false);

@@ -12,7 +12,7 @@ const useDashboard = () => {
   const [distribucionClientes, setDistribucionClientes] = useState([]);
   const [rendimientoAsesores, setRendimientoAsesores] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const cargarDatos = async () => {
@@ -23,12 +23,13 @@ const useDashboard = () => {
           fetchDistribucionClientes(),
           fetchRendimientoAsesores(),
         ]);
+
         setMetricas(m);
         setCobranzaEvolucion(c);
         setDistribucionClientes(d);
         setRendimientoAsesores(r);
       } catch (err) {
-        setError("Error al cargar los datos del dashboard.");
+        setError(err.response?.data?.message || "Error al cargar dashboard.");
       } finally {
         setLoading(false);
       }

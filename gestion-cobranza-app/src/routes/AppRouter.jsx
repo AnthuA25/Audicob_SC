@@ -7,10 +7,16 @@ import ClientesPage from "../pages/clientes/ClientesPage";
 import useAuth from "../hooks/useAuth";
 import { ROUTES } from "../constants/routes";
 
-const ProtectedRoute = ({ children }) => {
-  const { token, loading } = useAuth();
+const ProtectedRoute = ({ children, allowedRoles = [] }) => {
+  const { token, user, loading } = useAuth();
+
   if (loading) return <div>Cargando...</div>;
   if (!token) return <Navigate to={ROUTES.LOGIN} />;
+
+  if (allowedRoles.length > 0 && !allowedRoles.includes(user?.rol)) {
+    return <Navigate to={ROUTES.LOGIN} />;
+  }
+
   return children;
 };
 
@@ -25,14 +31,18 @@ const AppRouter = () => {
 
         <Route
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["Administrador", "Asesor"]}>
               <DashboardLayout />
             </ProtectedRoute>
           }
         >
           <Route
             path={ROUTES.DASHBOARD_ADMIN}
-            element={<DashboardAdminPage />}
+            element={
+              <ProtectedRoute allowedRoles={["Administrador"]}>
+                <DashboardAdminPage />
+              </ProtectedRoute>
+            }
           />
           <Route
             path={ROUTES.DASHBOARD_ASESOR}
