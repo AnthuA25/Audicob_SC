@@ -26,15 +26,13 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Correo) || string.IsNullOrWhiteSpace(dto.Password))
-        {
-            return BadRequest(new { message = "Correo y contraseña son obligatorios." });
-        }
+        if (string.IsNullOrWhiteSpace(dto.Dni) || string.IsNullOrWhiteSpace(dto.Password))
+            return BadRequest(new { message = "DNI y contraseña son obligatorios." });
 
         var usuario = await _context.Usuarios
             .Include(u => u.IdRolNavigation)
             .FirstOrDefaultAsync(u =>
-                u.Correo.ToLower() == dto.Correo.ToLower().Trim() &&
+                u.Dni == dto.Dni.Trim() &&
                 u.Activo &&
                 !u.Eliminado);
 
