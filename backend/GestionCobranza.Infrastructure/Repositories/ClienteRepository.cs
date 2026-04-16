@@ -21,7 +21,31 @@ public class ClienteRepository : IClienteRepository
                                      c.apellidos.ToLower().Contains(filtro) ||
                                      c.dni.Contains(filtro));
         }
-        return await query.ToListAsync();
+        return await _context.Clientes
+            .Where(c => !c.eliminado) // Solo mostramos los que no han sido dados de baja
+            .ToListAsync();
+    }
+
+    public async Task UpdateAsync(Cliente cliente)
+    {
+        _context.Clientes.Update(cliente);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task DeleteLogicoAsync(int id)
+    {
+        var cliente = await _context.Clientes.FindAsync(id);
+        if (cliente != null)
+        {
+            cliente.eliminado = true;
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<Cliente?> ObtenerPorIdAsync(int id)
+    {
+        return await _context.Clientes
+            .FirstOrDefaultAsync(c => c.id_cliente == id && !c.eliminado);
     }
 
     // HU11 - Listado por Asesor

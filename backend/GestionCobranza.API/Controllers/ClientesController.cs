@@ -18,6 +18,24 @@ public class ClientesController : ControllerBase
         // Cambiado a ListarTodosAsync para que coincida con tu Service corregido
         => Ok(await _service.ListarTodosAsync(search));
 
+
+    // Editar cliente
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, [FromBody] ClienteDto dto)
+    {
+        var result = await _service.EditarClienteAsync(id, dto);
+        return result ? NoContent() : NotFound();
+    }
+
+    // Eliminar el cliente
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        // Cambiamos _repository por _service
+        var result = await _service.EliminarClienteAsync(id);
+        return result ? NoContent() : NotFound();
+    }
+
     // HU11 - Listado por Asesor
     [HttpGet("asesor/{idAsesor}")]
     public async Task<IActionResult> GetByAsesor(int idAsesor, [FromQuery] string? search)

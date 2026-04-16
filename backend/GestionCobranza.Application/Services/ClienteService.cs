@@ -26,6 +26,33 @@ public class ClienteService : IClienteService
         ));
     }
 
+    public async Task<bool> EditarClienteAsync(int id, ClienteDto dto)
+    {
+        var cliente = await _repository.ObtenerPorIdAsync(id);
+        if (cliente == null) return false;
+
+        // Actualizamos los campos permitidos según la HU03
+        cliente.dni = dto.Dni;
+        cliente.correo = dto.Correo;
+        cliente.telefono = dto.Telefono;
+        cliente.riesgo = dto.Riesgo;
+        cliente.estado_cliente = dto.Estado;
+
+        cliente.fecha_modificacion = DateTime.UtcNow;
+
+        await _repository.UpdateAsync(cliente);
+        return true;
+    }
+
+    public async Task<bool> EliminarClienteAsync(int id)
+    {
+        var cliente = await _repository.ObtenerPorIdAsync(id);
+        if (cliente == null) return false;
+
+        await _repository.DeleteLogicoAsync(id);
+        return true;
+    }
+
     // HU11: Listar por Asesor
     public async Task<IEnumerable<ClienteDto>> ListarClientesPorAsesorAsync(int idAsesor, string? filtro)
     {
