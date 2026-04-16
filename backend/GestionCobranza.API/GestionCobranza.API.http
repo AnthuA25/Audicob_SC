@@ -1,6 +1,0 @@
-@GestionCobranza.API_HostAddress = http://localhost:5249
-
-GET {{GestionCobranza.API_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
