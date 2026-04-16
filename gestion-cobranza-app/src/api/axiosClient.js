@@ -2,7 +2,7 @@ import axios from "axios";
 import { getToken, clearSession } from "../utils/storage";
 
 const axiosClient = axios.create({
-  baseURL: "https://localhost:5001/api",
+  baseURL: "http://localhost:5138/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -11,12 +11,14 @@ const axiosClient = axios.create({
 axiosClient.interceptors.request.use(
   (config) => {
     const token = getToken();
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
     return config;
   },
-  (error) => Promise.reject(error),
+  (error) => Promise.reject(error)
 );
 
 axiosClient.interceptors.response.use(
@@ -24,10 +26,10 @@ axiosClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       clearSession();
-      window.location.href = "/login";
     }
+
     return Promise.reject(error);
-  },
+  }
 );
 
 export default axiosClient;

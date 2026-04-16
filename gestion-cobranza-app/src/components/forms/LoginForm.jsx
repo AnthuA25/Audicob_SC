@@ -1,7 +1,7 @@
 import { useState } from "react";
 import useAuth from "../../hooks/useAuth";
 import { loginService } from "../../services/authService";
-import { saveToken, saveUser } from "../../utils/storage";
+import { getToken, getUser } from "../../utils/storage";
 import { useNavigate } from "react-router-dom";
 
 const LoginForm = () => {
@@ -39,13 +39,20 @@ const LoginForm = () => {
     setLoading(true);
     try {
       const redirectTo = await loginService(dni, password);
-      const user = JSON.parse(localStorage.getItem("user"));
-      const token = localStorage.getItem("token");
+
+      const user = getUser();
+      const token = getToken();
+
       setUser(user);
       setToken(token);
+
       navigate(redirectTo);
     } catch (error) {
-      setAlertError("Credenciales incorrectas. Verifica tu DNI y contraseña.");
+      const message =
+        error.response?.data?.message ||
+        "Credenciales incorrectas. Verifica tu DNI y contraseña.";
+
+      setAlertError(message);
     } finally {
       setLoading(false);
     }

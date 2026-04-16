@@ -6,12 +6,18 @@ import { ROUTES } from "../constants/routes";
 export const loginService = async (dni, password) => {
   const data = await loginApi({ dni, password });
 
+  if (!data.token || !data.user) {
+    throw new Error("Respuesta de login inválida");
+  }
+
   saveToken(data.token);
   saveUser(data.user);
 
   if (data.user.rol === ROLES.ADMIN) {
     return ROUTES.DASHBOARD_ADMIN;
-  } else if (data.user.rol === ROLES.ASESOR) {
+  } 
+
+  if (data.user.rol === ROLES.ASESOR) {
     return ROUTES.DASHBOARD_ASESOR;
   }
 
