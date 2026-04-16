@@ -24,8 +24,17 @@ public class Cliente
     public string? telefono { get; set; }
     public string? direccion { get; set; }
 
-    public string estado_cliente { get; set; } = "NUEVO";
-    public string riesgo { get; set; } = "BAJO";
+    // Campos financieros (HU-04 / HU-10)
+    [Column(TypeName = "numeric(12,2)")]
+    public decimal deuda_total { get; set; } = 0.00m;
+
+    [Column(TypeName = "numeric(12,2)")]
+    public decimal saldo_pendiente { get; set; } = 0.00m;
+
+    public DateOnly? fecha_vencimiento { get; set; }
+
+    public string estado_cliente { get; set; } = "Nuevo";
+    public string riesgo { get; set; } = "Bajo";
     public string? observacion { get; set; }
 
     public DateTime fecha_registro { get; set; } = DateTime.Now;
