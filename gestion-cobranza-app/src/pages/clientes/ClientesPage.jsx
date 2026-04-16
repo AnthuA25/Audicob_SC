@@ -1,53 +1,19 @@
 import { useState } from "react";
-import { Search, UserPlus, Pencil, Trash2 } from "lucide-react";
+import { Search, Eye, Mail, Phone } from "lucide-react";
 import useClientes from "../../hooks/useClientes";
-import ClienteForm from "../../components/forms/ClienteForm";
-import {
-  EstadoBadge,
-  RiesgoBadge,
-} from "../../components/clientes/ClienteEstadoBadge";
+import { EstadoBadge, RiesgoBadge } from "../../components/clientes/ClienteEstadoBadge";
 import "../../styles/clientes.css";
 
 const ClientesPage = () => {
-  const { clientes, agregarCliente, editarCliente, borrarCliente } =
-    useClientes();
+  const { clientes } = useClientes();
   const [busqueda, setBusqueda] = useState("");
-  const [modalNuevo, setModalNuevo] = useState(false);
-  const [clienteEditar, setClienteEditar] = useState(null);
-  const [clienteEliminar, setClienteEliminar] = useState(null);
-  const [toast, setToast] = useState("");
-
-  const mostrarToast = (mensaje) => {
-    setToast(mensaje);
-    setTimeout(() => setToast(""), 3000);
-  };
 
   const clientesFiltrados = clientes.filter(
     (c) =>
       c.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-      c.email.toLowerCase().includes(busqueda.toLowerCase()),
+      c.email.toLowerCase().includes(busqueda.toLowerCase()) ||
+      c.id.toString().includes(busqueda.toLowerCase()),
   );
-
-  const clientesActivos = clientes.filter((c) => c.estado !== "Moroso").length;
-  const clientesMorosos = clientes.filter((c) => c.estado === "Moroso").length;
-
-  const handleGuardar = async (form) => {
-    if (clienteEditar) {
-      await editarCliente(clienteEditar.id, form);
-      mostrarToast("Cliente actualizado exitosamente");
-      setClienteEditar(null);
-    } else {
-      await agregarCliente(form);
-      mostrarToast("Cliente creado exitosamente");
-      setModalNuevo(false);
-    }
-  };
-
-  const handleEliminar = async () => {
-    await borrarCliente(clienteEliminar.id);
-    mostrarToast("Cliente eliminado exitosamente");
-    setClienteEliminar(null);
-  };
 
   const getDiasClass = (dias) => {
     if (dias >= 60) return "dias-atraso alto";
@@ -56,37 +22,22 @@ const ClientesPage = () => {
   };
 
   return (
-    <div>
+    <div className="clientes-page">
       <div className="clientes-header">
         <div className="clientes-header-info">
-          <h1>Gestión de Clientes</h1>
-          <p>Administra la cartera completa de clientes</p>
+          <h1>Gestión de clientes</h1>
         </div>
-        <button className="btn-nuevo" onClick={() => setModalNuevo(true)}>
-          <UserPlus size={16} /> Nuevo Cliente
-        </button>
       </div>
 
       <div className="clientes-filtros">
         <div className="search-container">
-          <Search size={16} className="search-icon" />
+          <Search size={18} className="search-icon" />
           <input
             className="search-input"
             placeholder="Buscar por nombre, email o ID..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
           />
-        </div>
-      </div>
-
-      <div className="clientes-stats">
-        <div className="stat-card activos">
-          <p>Clientes Activos</p>
-          <span>{clientesActivos}</span>
-        </div>
-        <div className="stat-card morosos">
-          <p>Clientes Morosos</p>
-          <span>{clientesMorosos}</span>
         </div>
       </div>
 
@@ -110,8 +61,12 @@ const ClientesPage = () => {
                 <td>{cliente.nombre}</td>
                 <td>
                   <div className="cliente-contacto">
-                    <span>✉ {cliente.email}</span>
-                    <span>📞 {cliente.telefono}</span>
+                    <span>
+                      <Mail size={14} /> {cliente.email}
+                    </span>
+                    <span>
+                      <Phone size={14} /> {cliente.telefono}
+                    </span>
                   </div>
                 </td>
                 <td>{cliente.asesorAsignado}</td>
@@ -128,69 +83,15 @@ const ClientesPage = () => {
                   <EstadoBadge estado={cliente.estado} />
                 </td>
                 <td>
-                  <div className="acciones">
-                    <button
-                      className="btn-editar"
-                      onClick={() => setClienteEditar(cliente)}
-                    >
-                      <Pencil size={15} />
-                    </button>
-                    <button
-                      className="btn-eliminar"
-                      onClick={() => setClienteEliminar(cliente)}
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
+                  <button className="btn-ver" aria-label={`Ver ${cliente.nombre}`}>
+                    <Eye size={16} />
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
-      {(modalNuevo || clienteEditar) && (
-        <ClienteForm
-          clienteEditar={clienteEditar}
-          onGuardar={handleGuardar}
-          onCancelar={() => {
-            setModalNuevo(false);
-            setClienteEditar(null);
-          }}
-        />
-      )}
-
-      {clienteEliminar && (
-        <div className="modal-overlay">
-          <div className="modal-card">
-            <h2 className="modal-title">¿Estás seguro?</h2>
-            <p className="modal-delete-text">
-              Esta acción no se puede deshacer. El cliente y todos sus datos
-              asociados serán eliminados permanentemente del sistema.
-            </p>
-            <div className="modal-actions">
-              <button
-                className="btn-cancelar"
-                onClick={() => setClienteEliminar(null)}
-              >
-                Cancelar
-              </button>
-              <button
-                className="btn-eliminar-confirmar"
-                onClick={handleEliminar}
-              >
-                Eliminar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {toast && (
-        <div className="toast">
-          <span className="toast-icon">✓</span> {toast}
-        </div>
-      )}
     </div>
   );
 };
