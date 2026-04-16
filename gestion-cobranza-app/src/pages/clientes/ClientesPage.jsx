@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Search, UserPlus, Pencil, Trash2 } from "lucide-react";
 import useClientes from "../../hooks/useClientes";
+import ClienteForm from "../../components/forms/ClienteForm";
 import {
   EstadoBadge,
   RiesgoBadge,
@@ -8,9 +9,18 @@ import {
 import "../../styles/clientes.css";
 
 const ClientesPage = () => {
-  const { clientes } = useClientes();
-
+  const { clientes, agregarCliente, editarCliente, borrarCliente } =
+    useClientes();
   const [busqueda, setBusqueda] = useState("");
+  const [modalNuevo, setModalNuevo] = useState(false);
+  const [clienteEditar, setClienteEditar] = useState(null);
+  const [clienteEliminar, setClienteEliminar] = useState(null);
+  const [toast, setToast] = useState("");
+
+  const mostrarToast = (mensaje) => {
+    setToast(mensaje);
+    setTimeout(() => setToast(""), 3000);
+  };
 
   const clientesFiltrados = clientes.filter(
     (c) =>
@@ -20,6 +30,24 @@ const ClientesPage = () => {
 
   const clientesActivos = clientes.filter((c) => c.estado !== "Moroso").length;
   const clientesMorosos = clientes.filter((c) => c.estado === "Moroso").length;
+
+  const handleGuardar = async (form) => {
+    if (clienteEditar) {
+      await editarCliente(clienteEditar.id, form);
+      mostrarToast("Cliente actualizado exitosamente");
+      setClienteEditar(null);
+    } else {
+      await agregarCliente(form);
+      mostrarToast("Cliente creado exitosamente");
+      setModalNuevo(false);
+    }
+  };
+
+  const handleEliminar = async () => {
+    await borrarCliente(clienteEliminar.id);
+    mostrarToast("Cliente eliminado exitosamente");
+    setClienteEliminar(null);
+  };
 
   const getDiasClass = (dias) => {
     if (dias >= 60) return "dias-atraso alto";
@@ -34,7 +62,7 @@ const ClientesPage = () => {
           <h1>Gestión de Clientes</h1>
           <p>Administra la cartera completa de clientes</p>
         </div>
-        <button className="btn-nuevo">
+        <button className="btn-nuevo" onClick={() => setModalNuevo(true)}>
           <UserPlus size={16} /> Nuevo Cliente
         </button>
       </div>
@@ -101,10 +129,16 @@ const ClientesPage = () => {
                 </td>
                 <td>
                   <div className="acciones">
-                    <button className="btn-editar">
+                    <button
+                      className="btn-editar"
+                      onClick={() => setClienteEditar(cliente)}
+                    >
                       <Pencil size={15} />
                     </button>
-                    <button className="btn-eliminar">
+                    <button
+                      className="btn-eliminar"
+                      onClick={() => setClienteEliminar(cliente)}
+                    >
                       <Trash2 size={15} />
                     </button>
                   </div>
@@ -114,6 +148,49 @@ const ClientesPage = () => {
           </tbody>
         </table>
       </div>
+
+      {(modalNuevo || clienteEditar) && (
+        <ClienteForm
+          clienteEditar={clienteEditar}
+          onGuardar={handleGuardar}
+          onCancelar={() => {
+            setModalNuevo(false);
+            setClienteEditar(null);
+          }}
+        />
+      )}
+
+      {clienteEliminar && (
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <h2 className="modal-title">¿Estás seguro?</h2>
+            <p className="modal-delete-text">
+              Esta acción no se puede deshacer. El cliente y todos sus datos
+              asociados serán eliminados permanentemente del sistema.
+            </p>
+            <div className="modal-actions">
+              <button
+                className="btn-cancelar"
+                onClick={() => setClienteEliminar(null)}
+              >
+                Cancelar
+              </button>
+              <button
+                className="btn-eliminar-confirmar"
+                onClick={handleEliminar}
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toast && (
+        <div className="toast">
+          <span className="toast-icon">✓</span> {toast}
+        </div>
+      )}
     </div>
   );
 };
