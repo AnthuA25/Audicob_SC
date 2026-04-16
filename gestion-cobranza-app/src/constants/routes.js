@@ -7,4 +7,5 @@ export const ROUTES = {
   MOROSIDAD: "/morosidad",
   ALERTAS: "/alertas",
   REPORTES: "/reportes",
+  IMPORTAR: "/importar",
 };

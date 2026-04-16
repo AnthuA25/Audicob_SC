@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AuthLayout from "../layouts/AuthLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
 import LoginPage from "../pages/auth/LoginPage";
+import DashboardAdminPage from "../pages/dashboard/DashboardAdminPage";
 import useAuth from "../hooks/useAuth";
 import { ROUTES } from "../constants/routes";
 
@@ -32,7 +33,7 @@ const AppRouter = () => {
         >
           <Route
             path={ROUTES.DASHBOARD_ADMIN}
-            element={<div>Dashboard Admin</div>}
+            element={<DashboardAdminPage />}
           />
           <Route
             path={ROUTES.DASHBOARD_ASESOR}
