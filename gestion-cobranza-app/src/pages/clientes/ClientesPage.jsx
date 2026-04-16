@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Search, UserPlus, Pencil, Trash2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Search, UserPlus, Eye, Pencil, Trash2 } from "lucide-react";
 import useClientes from "../../hooks/useClientes";
 import ClienteForm from "../../components/forms/ClienteForm";
 import {
@@ -129,6 +130,9 @@ const ClientesPage = () => {
                 </td>
                 <td>
                   <div className="acciones">
+                    <Link to={`/clientes/${cliente.id}`} className="btn-ver" aria-label={`Ver ${cliente.nombre}`}>
+                      <Eye size={15} />
+                    </Link>
                     <button
                       className="btn-editar"
                       onClick={() => setClienteEditar(cliente)}

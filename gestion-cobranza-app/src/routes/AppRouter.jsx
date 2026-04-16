@@ -4,6 +4,7 @@ import DashboardLayout from "../layouts/DashboardLayout";
 import LoginPage from "../pages/auth/LoginPage";
 import DashboardAdminPage from "../pages/dashboard/DashboardAdminPage";
 import ClientesPage from "../pages/clientes/ClientesPage";
+import DetalleClientePage from "../pages/clientes/DetalleClientePage";
 import useAuth from "../hooks/useAuth";
 import { ROUTES } from "../constants/routes";
 
@@ -39,6 +40,7 @@ const AppRouter = () => {
             element={<div>Dashboard Asesor</div>}
           />
           <Route path={ROUTES.CLIENTES} element={<ClientesPage />} />
+          <Route path={ROUTES.CLIENTE_DETALLE} element={<DetalleClientePage />} />
         </Route>
       </Routes>
     </BrowserRouter>

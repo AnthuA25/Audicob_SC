@@ -3,6 +3,7 @@ export const ROUTES = {
   DASHBOARD_ADMIN: "/dashboard/admin",
   DASHBOARD_ASESOR: "/dashboard/asesor",
   CLIENTES: "/clientes",
+  CLIENTE_DETALLE: "/clientes/:id",
   ASESORES: "/asesores",
   MOROSIDAD: "/morosidad",
   ALERTAS: "/alertas",
