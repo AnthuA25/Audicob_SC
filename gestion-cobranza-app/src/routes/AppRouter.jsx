@@ -4,6 +4,7 @@ import DashboardLayout from "../layouts/DashboardLayout";
 import LoginPage from "../pages/auth/LoginPage";
 import DashboardAdminPage from "../pages/dashboard/DashboardAdminPage";
 import ClientesPage from "../pages/clientes/ClientesPage";
+import AsesoresPage from "../pages/asesores/AsesoresPage";
 import useAuth from "../hooks/useAuth";
 import { ROUTES } from "../constants/routes";
 
@@ -48,7 +49,22 @@ const AppRouter = () => {
             path={ROUTES.DASHBOARD_ASESOR}
             element={<div>Dashboard Asesor</div>}
           />
-          <Route path={ROUTES.CLIENTES} element={<ClientesPage />} />
+          <Route
+            path={ROUTES.CLIENTES}
+            element={
+              <ProtectedRoute allowedRoles={["Administrador"]}>
+                <ClientesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path={ROUTES.ASESORES}
+            element={
+              <ProtectedRoute allowedRoles={["Administrador"]}>
+                <AsesoresPage />
+              </ProtectedRoute>
+            }
+          />
         </Route>
       </Routes>
     </BrowserRouter>
