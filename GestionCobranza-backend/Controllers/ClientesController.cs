@@ -19,7 +19,7 @@ public class ClientesController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "Administrador,Asesor")]
+    [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> ListarClientes()
     {
         var clientes = await _context.Clientes
@@ -258,5 +258,63 @@ public class ClientesController : ControllerBase
             .ToListAsync();
 
         return Ok(clientes);
+    }
+    [HttpGet("mis-clientes/{id}")]
+    [Authorize(Roles = "Asesor")]
+    public async Task<IActionResult> ObtenerMiClienteDetalle(int id)
+    {
+        var idUsuarioClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrWhiteSpace(idUsuarioClaim))
+            return Unauthorized(new { message = "No se pudo identificar al asesor autenticado." });
+
+        var idAsesor = int.Parse(idUsuarioClaim);
+
+        var cliente = await _context.Clientes
+            .Include(c => c.IdAsesorNavigation)
+            .Where(c =>
+                c.IdCliente == id &&
+                c.Activo &&
+                !c.Eliminado &&
+                c.IdAsesor == idAsesor)
+            .Select(c => new
+            {
+                idCliente = c.IdCliente,
+                nombreCompleto = c.Nombres + " " + c.Apellidos,
+                correo = c.Correo,
+                telefono = c.Telefono,
+                fechaRegistro = c.FechaRegistro.ToString("dd MMM yyyy"),
+                asesorActual = c.IdAsesorNavigation != null
+                    ? c.IdAsesorNavigation.Nombres + " " + c.IdAsesorNavigation.Apellidos
+                    : "-",
+                deudaTotal = "S/. 15,000",
+                deudaPendiente = "S/. 12,280",
+                diasAtraso = 45,
+                scoreRiesgo = 40,
+                estadoActual = "Contactado",
+                ultimoContacto = "14 mar 2026",
+                proximoSeguimiento = "24 mar 2026",
+                bitacora = new[]
+                {
+                new
+                {
+                    titulo = "Acuerdo",
+                    descripcion = "Acuerdo de pago: 4 cuotas de S/. 3,750",
+                    fecha = "15 mar 2026 10:45"
+                },
+                new
+                {
+                    titulo = "Llamada",
+                    descripcion = "Contacto telefónico. Cliente solicita plan de pagos.",
+                    fecha = "15 mar 2026 10:30"
+                }
+                }
+            })
+            .FirstOrDefaultAsync();
+
+        if (cliente == null)
+            return NotFound(new { message = "Cliente no encontrado o no pertenece al asesor." });
+
+        return Ok(cliente);
     }
 }

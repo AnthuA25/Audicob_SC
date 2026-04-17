@@ -104,7 +104,12 @@ const DashboardAdminPage = () => {
       </div>
 
       <div className="charts-grid">
-        <CobranzaLineChart data={ce} />
+        <CobranzaLineChart
+          data={ce}
+          title="Evolución de Cobranza"
+          dataKey="cobranza"
+          color="#3b82f6"
+        />
         <DistribucionClientesChart data={dc} />
       </div>
 

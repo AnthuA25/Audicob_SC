@@ -5,6 +5,9 @@ import LoginPage from "../pages/auth/LoginPage";
 import DashboardAdminPage from "../pages/dashboard/DashboardAdminPage";
 import ClientesPage from "../pages/clientes/ClientesPage";
 import AsesoresPage from "../pages/asesores/AsesoresPage";
+import DashboardAsesorPage from "../pages/dashboard/DashboardAsesorPage";
+import MisClientesPage from "../pages/clientes/MisClientesPage";
+import MiClienteDetallePage from "../pages/clientes/MiClienteDetallePage";
 import useAuth from "../hooks/useAuth";
 import { ROUTES } from "../constants/routes";
 
@@ -47,7 +50,11 @@ const AppRouter = () => {
           />
           <Route
             path={ROUTES.DASHBOARD_ASESOR}
-            element={<div>Dashboard Asesor</div>}
+            element={
+              <ProtectedRoute allowedRoles={["Asesor"]}>
+                <DashboardAsesorPage />
+              </ProtectedRoute>
+            }
           />
           <Route
             path={ROUTES.CLIENTES}
@@ -62,6 +69,24 @@ const AppRouter = () => {
             element={
               <ProtectedRoute allowedRoles={["Administrador"]}>
                 <AsesoresPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path={ROUTES.MIS_CLIENTES}
+            element={
+              <ProtectedRoute allowedRoles={["Asesor"]}>
+                <MisClientesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path={ROUTES.MIS_CLIENTES_DETALLE}
+            element={
+              <ProtectedRoute allowedRoles={["Asesor"]}>
+                <MiClienteDetallePage />
               </ProtectedRoute>
             }
           />
