@@ -1,0 +1,178 @@
+.morosidad-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.morosidad-header-info h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1e3a5f;
+  margin-bottom: 4px;
+}
+
+.morosidad-header-info p {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.btn-reporte {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #1e3a5f;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-reporte:hover {
+  background: #2563eb;
+}
+
+.morosidad-metricas {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.morosidad-metric-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.morosidad-metric-info p {
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.morosidad-metric-info span {
+  font-size: 22px;
+  font-weight: 600;
+  color: #1e3a5f;
+}
+
+.morosidad-metric-info small {
+  display: block;
+  font-size: 12px;
+  color: #22c55e;
+  margin-top: 4px;
+}
+
+.morosidad-metric-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.morosidad-table-section {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.morosidad-table-header {
+  margin-bottom: 1rem;
+}
+
+.morosidad-table-header h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e3a5f;
+}
+
+.morosidad-table-header p {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.morosidad-search {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.morosidad-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+
+.morosidad-search input {
+  width: 100%;
+  height: 40px;
+  padding: 0 16px 0 36px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #374151;
+  background: #fff;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.morosidad-search input:focus {
+  border-color: #3b82f6;
+}
+
+.morosidad-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.morosidad-table th {
+  text-align: left;
+  padding: 10px 12px;
+  color: #94a3b8;
+  font-weight: 500;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.morosidad-table td {
+  padding: 14px 12px;
+  color: #374151;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.morosidad-contacto {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.btn-ver {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #22c55e;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.btn-ver:hover {
+  background: #f0fdf4;
+}
