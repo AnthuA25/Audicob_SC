@@ -2,7 +2,7 @@ import axios from "axios";
 import { getToken, clearSession } from "../utils/storage";
 
 const axiosClient = axios.create({
-  baseURL: "http://localhost:5138/api",
+  baseURL: `${import.meta.env.VITE_API_URL}/api`,
   headers: {
     "Content-Type": "application/json",
   },
