@@ -3,6 +3,7 @@ using GestionCobranza_backend.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace GestionCobranza_backend.Controllers;
 
@@ -69,9 +70,10 @@ public class UsuariosController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Administrador")]
+    // [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> Crear([FromBody] CreateUsuarioDto dto)
     {
+
         if (string.IsNullOrWhiteSpace(dto.Nombres) ||
             string.IsNullOrWhiteSpace(dto.Apellidos) ||
             string.IsNullOrWhiteSpace(dto.Dni) ||
@@ -79,6 +81,24 @@ public class UsuariosController : ControllerBase
             string.IsNullOrWhiteSpace(dto.Password))
         {
             return BadRequest(new { message = "Faltan campos obligatorios." });
+        }
+
+        var existeAdmin = await _context.Usuarios
+        .Include(u => u.IdRolNavigation)
+        .AnyAsync(u =>
+            u.Activo &&
+            !u.Eliminado &&
+            u.IdRolNavigation.Nombre == "Administrador");
+
+        if (existeAdmin)
+        {
+            if (User.Identity == null || !User.Identity.IsAuthenticated)
+                return Unauthorized(new { message = "Debes iniciar sesión como administrador." });
+
+            var rolUsuario = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+
+            if (rolUsuario != "Administrador")
+                return Forbid();
         }
 
         var rolExiste = await _context.Rols.AnyAsync(r =>
@@ -110,7 +130,9 @@ public class UsuariosController : ControllerBase
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
             Estado = "ACTIVO",
             FechaRegistro = DateTime.Now,
-            UsuarioRegistro = User.Identity?.Name ?? "system",
+            UsuarioRegistro = existeAdmin
+            ? User.Identity?.Name ?? "Administrador"
+            : "system",
             Activo = true,
             Eliminado = false
         };
@@ -120,7 +142,7 @@ public class UsuariosController : ControllerBase
 
         return Ok(new
         {
-            message = "Usuario creado correctamente.",
+            message = existeAdmin ? "Usuario creado correctamente." : "Primer administrador creado correctamente",
             usuario = new
             {
                 usuario.IdUsuario,
@@ -131,7 +153,7 @@ public class UsuariosController : ControllerBase
             }
         });
     }
-    
+
     [HttpGet("asesores")]
     [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> ListarAsesores([FromQuery] string? busqueda)

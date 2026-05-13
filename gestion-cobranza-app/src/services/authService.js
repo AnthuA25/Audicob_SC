@@ -10,8 +10,13 @@ export const loginService = async (dni, password) => {
     throw new Error("Respuesta de login inválida");
   }
 
+  const user = {
+    ...data.user,
+    rol: data.user.rol || data.user.Rol,
+  };
+
   saveToken(data.token);
-  saveUser(data.user);
+  saveUser(user);
 
   if (data.user.rol === ROLES.ADMIN) {
     return ROUTES.DASHBOARD_ADMIN;

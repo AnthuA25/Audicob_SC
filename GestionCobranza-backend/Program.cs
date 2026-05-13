@@ -90,7 +90,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 app.UseCors("ReactPolicy");
 
@@ -99,4 +99,8 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();
+// app.Run();
+
+var port = Environment.GetEnvironmentVariable("PORT") ?? "10000";
+
+app.Run($"http://0.0.0.0:{port}");
