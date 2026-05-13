@@ -8,6 +8,7 @@ import AsesoresPage from "../pages/asesores/AsesoresPage";
 import DashboardAsesorPage from "../pages/dashboard/DashboardAsesorPage";
 import MisClientesPage from "../pages/clientes/MisClientesPage";
 import MiClienteDetallePage from "../pages/clientes/MiClienteDetallePage";
+import MorosidadPage from "../pages/morosidad/MorosidadPage";
 import useAuth from "../hooks/useAuth";
 import { ROUTES } from "../constants/routes";
 
@@ -81,7 +82,7 @@ const AppRouter = () => {
               </ProtectedRoute>
             }
           />
-
+          <Route path={ROUTES.MOROSIDAD} element={<MorosidadPage />} />
           <Route
             path={ROUTES.MIS_CLIENTES_DETALLE}
             element={
