@@ -80,7 +80,7 @@ const MisClientesPage = () => {
                 <td>{cliente.deudaPendiente || "-"}</td>
                 <td>
                   <span className={getDiasClass(cliente.diasAtraso)}>
-                    {cliente.diasAtraso !== ""
+                    {cliente.diasAtraso > 0
                       ? `${cliente.diasAtraso} días`
                       : "-"}
                   </span>

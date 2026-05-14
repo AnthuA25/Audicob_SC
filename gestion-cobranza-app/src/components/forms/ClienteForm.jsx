@@ -17,6 +17,8 @@ const ClienteForm = ({
     direccion: "",
     idAsesor: "",
     observacion: "",
+    montoDeuda: "",
+    fechaVencimiento: "",
   });
 
   const [errores, setErrores] = useState({});
@@ -57,8 +59,11 @@ const ClienteForm = ({
   const validar = () => {
     const nuevosErrores = {};
 
-    if (!form.nombres.trim()) nuevosErrores.nombres = "Los nombres son obligatorios.";
-    if (!form.apellidos.trim()) nuevosErrores.apellidos = "Los apellidos son obligatorios.";
+    if (!form.nombres.trim())
+      nuevosErrores.nombres = "Los nombres son obligatorios.";
+
+    if (!form.apellidos.trim())
+      nuevosErrores.apellidos = "Los apellidos son obligatorios.";
 
     if (!form.dni.trim()) nuevosErrores.dni = "El DNI es obligatorio.";
     else if (!/^\d{8}$/.test(form.dni))
@@ -75,8 +80,16 @@ const ClienteForm = ({
     if (!form.telefono.trim())
       nuevosErrores.telefono = "El teléfono es obligatorio.";
 
-    if (!form.idAsesor)
-      nuevosErrores.idAsesor = "Selecciona un asesor.";
+    if (!form.idAsesor) nuevosErrores.idAsesor = "Selecciona un asesor.";
+
+    if (!clienteEditar && !form.montoDeuda)
+      nuevosErrores.montoDeuda = "La deuda pendiente es obligatoria.";
+
+    if (!clienteEditar && Number(form.montoDeuda) <= 0)
+      nuevosErrores.montoDeuda = "La deuda pendiente debe ser mayor a 0.";
+
+    if (!clienteEditar && !form.fechaVencimiento)
+      nuevosErrores.fechaVencimiento = "La fecha de pago es obligatoria.";
 
     return nuevosErrores;
   };
@@ -98,6 +111,14 @@ const ClienteForm = ({
       telefono: form.telefono.trim(),
       direccion: form.direccion.trim(),
       observacion: form.observacion.trim(),
+      montoDeuda: !clienteEditar ? Number(form.montoDeuda) : undefined,
+      fechaEmision: !clienteEditar
+        ? new Date().toISOString().split("T")[0]
+        : undefined,
+      fechaVencimiento: !clienteEditar ? form.fechaVencimiento : undefined,
+      descripcionDeuda: !clienteEditar
+        ? "Deuda inicial del cliente"
+        : undefined,
     });
   };
 
@@ -116,7 +137,9 @@ const ClienteForm = ({
               value={form.nombres}
               onChange={handleChange}
             />
-            {errores.nombres && <span className="form-error">{errores.nombres}</span>}
+            {errores.nombres && (
+              <span className="form-error">{errores.nombres}</span>
+            )}
           </div>
 
           <div className="form-field">
@@ -126,7 +149,9 @@ const ClienteForm = ({
               value={form.apellidos}
               onChange={handleChange}
             />
-            {errores.apellidos && <span className="form-error">{errores.apellidos}</span>}
+            {errores.apellidos && (
+              <span className="form-error">{errores.apellidos}</span>
+            )}
           </div>
         </div>
 
@@ -149,18 +174,18 @@ const ClienteForm = ({
               value={form.telefono}
               onChange={handleChange}
             />
-            {errores.telefono && <span className="form-error">{errores.telefono}</span>}
+            {errores.telefono && (
+              <span className="form-error">{errores.telefono}</span>
+            )}
           </div>
         </div>
 
         <div className="form-field">
           <label>Correo</label>
-          <input
-            name="correo"
-            value={form.correo}
-            onChange={handleChange}
-          />
-          {errores.correo && <span className="form-error">{errores.correo}</span>}
+          <input name="correo" value={form.correo} onChange={handleChange} />
+          {errores.correo && (
+            <span className="form-error">{errores.correo}</span>
+          )}
         </div>
 
         <div className="form-field">
@@ -174,11 +199,7 @@ const ClienteForm = ({
 
         <div className="form-field">
           <label>Asesor Asignado *</label>
-          <select
-            name="idAsesor"
-            value={form.idAsesor}
-            onChange={handleChange}
-          >
+          <select name="idAsesor" value={form.idAsesor} onChange={handleChange}>
             <option value="">Seleccionar asesor</option>
             {asesores.map((asesor) => (
               <option key={asesor.idUsuario} value={asesor.idUsuario}>
@@ -186,8 +207,41 @@ const ClienteForm = ({
               </option>
             ))}
           </select>
-          {errores.idAsesor && <span className="form-error">{errores.idAsesor}</span>}
+          {errores.idAsesor && (
+            <span className="form-error">{errores.idAsesor}</span>
+          )}
         </div>
+
+        {!clienteEditar && (
+          <div className="form-row">
+            <div className="form-field">
+              <label>Deuda Pendiente *</label>
+              <input
+                type="number"
+                name="montoDeuda"
+                value={form.montoDeuda}
+                onChange={handleChange}
+                placeholder="Ej. 15000"
+              />
+              {errores.montoDeuda && (
+                <span className="form-error">{errores.montoDeuda}</span>
+              )}
+            </div>
+
+            <div className="form-field">
+              <label>Fecha de Pago *</label>
+              <input
+                type="date"
+                name="fechaVencimiento"
+                value={form.fechaVencimiento}
+                onChange={handleChange}
+              />
+              {errores.fechaVencimiento && (
+                <span className="form-error">{errores.fechaVencimiento}</span>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="form-field">
           <label>Observación</label>

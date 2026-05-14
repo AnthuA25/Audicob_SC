@@ -16,6 +16,7 @@ const ClientesPage = () => {
     agregarCliente,
     editarCliente,
     borrarCliente,
+    cargarClientes,
   } = useClientes();
   const [busqueda, setBusqueda] = useState("");
   const [modalNuevo, setModalNuevo] = useState(false);
@@ -49,10 +50,13 @@ const ClientesPage = () => {
           riesgo: clienteEditar.riesgo?.toUpperCase() || "BAJO",
         });
 
+        await cargarClientes();
+
         mostrarToast("Cliente actualizado exitosamente");
         setClienteEditar(null);
       } else {
         await agregarCliente(form);
+        await cargarClientes();
         mostrarToast("Cliente creado exitosamente");
         setModalNuevo(false);
       }
@@ -137,7 +141,7 @@ const ClientesPage = () => {
                 <td>{cliente.deudaPendiente || "-"}</td>
                 <td>
                   <span className="dias-atraso pendiente">
-                    {cliente.diasAtraso !== ""
+                    {cliente.diasAtraso > 0
                       ? `${cliente.diasAtraso} días`
                       : "-"}
                   </span>

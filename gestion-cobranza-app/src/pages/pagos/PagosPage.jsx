@@ -1,14 +1,36 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Plus, CheckCircle, Upload } from "lucide-react";
+import usePagos from "../../hooks/usePagos";
+import { registrarPago } from "../../services/pagosService";
+import {
+  fetchMisClientes,
+  fetchMiClienteDetalle,
+} from "../../services/misClientesService";
 import "../../styles/pagos.css";
 
-const clientesEjemplo = [
-  { id: 1, nombre: "Miguel Torres" },
-  { id: 2, nombre: "Juan Pérez" },
-  { id: 3, nombre: "Laura Martínez" },
-];
+const formatoMoneda = (valor) => `S/. ${Number(valor ?? 0).toLocaleString()}`;
+
+const obtenerIdUsuarioToken = () => {
+  const token = localStorage.getItem("token");
+  if (!token) return null;
+
+  const payload = JSON.parse(atob(token.split(".")[1]));
+
+  return (
+    payload.nameid ||
+    payload.sub ||
+    payload[
+      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+    ]
+  );
+};
 
 const PagosPage = () => {
+  const idAsesor = obtenerIdUsuarioToken();
+  const { pagos, resumen, loading, cargarPagos } = usePagos(idAsesor);
+
+  const [clientes, setClientes] = useState([]);
+  const [deudasCliente, setDeudasCliente] = useState([]);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [toast, setToast] = useState("");
   const [comprobante, setComprobante] = useState(null);
@@ -16,51 +38,116 @@ const PagosPage = () => {
   const inputRef = useRef();
 
   const [form, setForm] = useState({
-    cliente: "",
+    idCliente: "",
+    idDeuda: "",
     monto: "",
     fechaPago: "",
     metodoPago: "",
     nota: "",
   });
 
+  useEffect(() => {
+    const cargarClientes = async () => {
+      try {
+        const data = await fetchMisClientes();
+        setClientes(data || []);
+      } catch {
+        setClientes([]);
+      }
+    };
+
+    cargarClientes();
+  }, []);
+
   const mostrarToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(""), 3000);
   };
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    setErrores({ ...errores, [e.target.name]: "" });
+  const handleChange = async (e) => {
+    const { name, value } = e.target;
+
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setErrores((prev) => ({ ...prev, [name]: "" }));
+
+    if (name === "idCliente") {
+      try {
+        const detalle = await fetchMiClienteDetalle(value);
+        const deudas = detalle.deudas || [];
+
+        setDeudasCliente(deudas);
+
+        const primeraDeudaPendiente = deudas.find(
+          (d) => Number(d.saldoPendiente) > 0,
+        );
+
+        setForm((prev) => ({
+          ...prev,
+          idCliente: value,
+          idDeuda: primeraDeudaPendiente?.idDeuda || "",
+        }));
+      } catch {
+        setDeudasCliente([]);
+        setForm((prev) => ({ ...prev, idDeuda: "" }));
+      }
+    }
   };
 
   const validar = () => {
     const nuevos = {};
-    if (!form.cliente) nuevos.cliente = "Selecciona un cliente.";
+
+    if (!form.idCliente) nuevos.idCliente = "Selecciona un cliente.";
+    if (!form.idDeuda) nuevos.idDeuda = "El cliente no tiene deuda pendiente.";
     if (!form.monto) nuevos.monto = "El monto es obligatorio.";
     else if (!/^\d+(\.\d{1,2})?$/.test(form.monto))
       nuevos.monto = "Ingresa un monto válido.";
+
     if (!form.fechaPago) nuevos.fechaPago = "La fecha es obligatoria.";
     if (!form.metodoPago) nuevos.metodoPago = "Selecciona un método de pago.";
+
     return nuevos;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const nuevosErrores = validar();
+
     if (Object.keys(nuevosErrores).length > 0) {
       setErrores(nuevosErrores);
       return;
     }
-    setModalAbierto(false);
-    setForm({
-      cliente: "",
-      monto: "",
-      fechaPago: "",
-      metodoPago: "",
-      nota: "",
-    });
-    setComprobante(null);
-    mostrarToast("Pago registrado correctamente");
+
+    try {
+      await registrarPago({
+        idDeuda: Number(form.idDeuda),
+        montoPagado: Number(form.monto),
+        metodoPago: form.metodoPago,
+        nroOperacion: comprobante?.name || "",
+        observacion: form.nota,
+      });
+
+      await cargarPagos();
+
+      setModalAbierto(false);
+      setForm({
+        idCliente: "",
+        idDeuda: "",
+        monto: "",
+        fechaPago: "",
+        metodoPago: "",
+        nota: "",
+      });
+      setDeudasCliente([]);
+      setComprobante(null);
+
+      mostrarToast("Pago registrado correctamente");
+    } catch (error) {
+      mostrarToast(
+        error.response?.data?.mensaje || "No se pudo registrar el pago.",
+      );
+    }
   };
+
+  if (loading) return <div>Cargando pagos...</div>;
 
   return (
     <div>
@@ -78,8 +165,12 @@ const PagosPage = () => {
         <div className="pago-metric-card">
           <div className="pago-metric-info">
             <p>Total Pagos Hoy</p>
-            <div className="pago-metric-valor">S/. 3,500</div>
-            <div className="pago-metric-sub">2 transacciones</div>
+            <div className="pago-metric-valor">
+              {formatoMoneda(resumen.totalPagosHoy)}
+            </div>
+            <div className="pago-metric-sub">
+              {resumen.transaccionesHoy} transacciones
+            </div>
           </div>
           <div className="pago-metric-icon">
             <CheckCircle size={18} color="#22c55e" />
@@ -88,8 +179,12 @@ const PagosPage = () => {
         <div className="pago-metric-card">
           <div className="pago-metric-info">
             <p>Esta Semana</p>
-            <div className="pago-metric-valor">S/. 15,100</div>
-            <div className="pago-metric-sub">8 transacciones</div>
+            <div className="pago-metric-valor">
+              {formatoMoneda(resumen.totalPagosSemana)}
+            </div>
+            <div className="pago-metric-sub">
+              {resumen.transaccionesSemana} transacciones
+            </div>
           </div>
           <div className="pago-metric-icon">
             <CheckCircle size={18} color="#22c55e" />
@@ -98,8 +193,12 @@ const PagosPage = () => {
         <div className="pago-metric-card">
           <div className="pago-metric-info">
             <p>Este Mes</p>
-            <div className="pago-metric-valor">S/. 45,000</div>
-            <div className="pago-metric-sub">10 transacciones</div>
+            <div className="pago-metric-valor">
+              {formatoMoneda(resumen.totalPagosMes)}
+            </div>
+            <div className="pago-metric-sub">
+              {resumen.transaccionesMes} transacciones
+            </div>
           </div>
           <div className="pago-metric-icon">
             <CheckCircle size={18} color="#22c55e" />
@@ -153,83 +252,30 @@ const PagosPage = () => {
             </tr>
           </thead>
           <tbody>
-            {[
-              {
-                fecha: "09 mar 2026",
-                cliente: "Miguel Torres",
-                monto: "S/. 3500",
-                metodo: "Transferencia",
-                notas: "Pago Total",
-              },
-              {
-                fecha: "04 mar 2026",
-                cliente: "Miguel Torres",
-                monto: "S/. 3500",
-                metodo: "Efectivo",
-                notas: "Primera cuota",
-              },
-              {
-                fecha: "09 feb 2026",
-                cliente: "Juan Pérez",
-                monto: "S/. 3500",
-                metodo: "Transferencia",
-                notas: "Pago parcial acordado",
-              },
-            ].map((p, i) => (
-              <tr key={i}>
-                <td
-                  style={{
-                    padding: "14px 12px",
-                    borderBottom: "1px solid #f1f5f9",
-                    color: "black",
-                  }}
-                >
-                  {p.fecha}
+            {pagos.map((pago) => (
+              <tr key={pago.idPago}>
+                <td style={{ padding: "14px 12px", color: "black" }}>
+                  {pago.fechaPago}
+                </td>
+                <td style={{ padding: "14px 12px", color: "black" }}>
+                  {pago.nombreCliente}
                 </td>
                 <td
                   style={{
                     padding: "14px 12px",
-                    borderBottom: "1px solid #f1f5f9",
-                    color: "black",
-                  }}
-                >
-                  {p.cliente}
-                </td>
-                <td
-                  style={{
-                    padding: "14px 12px",
-                    borderBottom: "1px solid #f1f5f9",
                     color: "#22c55e",
                     fontWeight: "500",
                   }}
                 >
-                  {p.monto}
+                  {formatoMoneda(pago.monto)}
                 </td>
-                <td
-                  style={{
-                    padding: "14px 12px",
-                    borderBottom: "1px solid #f1f5f9",
-                    color: "black",
-                  }}
-                >
-                  {p.metodo}
+                <td style={{ padding: "14px 12px", color: "black" }}>
+                  {pago.metodoPago}
                 </td>
-                <td
-                  style={{
-                    padding: "14px 12px",
-                    borderBottom: "1px solid #f1f5f9",
-                    color: "black",
-                  }}
-                >
-                  {p.notas}
+                <td style={{ padding: "14px 12px", color: "black" }}>
+                  {pago.nota || "-"}
                 </td>
-                <td
-                  style={{
-                    padding: "14px 12px",
-                    borderBottom: "1px solid #f1f5f9",
-                    color: "black",
-                  }}
-                >
+                <td style={{ padding: "14px 12px", color: "black" }}>
                   <span
                     style={{
                       display: "flex",
@@ -261,22 +307,47 @@ const PagosPage = () => {
             <div className="form-field">
               <label>Cliente</label>
               <select
-                name="cliente"
-                value={form.cliente}
+                name="idCliente"
+                value={form.idClientecliente}
                 onChange={handleChange}
                 style={errores.cliente ? { borderColor: "#ef4444" } : {}}
               >
                 <option value="">Seleccionar cliente ...</option>
-                {clientesEjemplo.map((c) => (
-                  <option key={c.id} value={c.nombre}>
-                    {c.nombre}
+                {clientes.map((c) => (
+                  <option key={c.idCliente} value={c.idCliente}>
+                    {c.nombres} {c.apellidos}
                   </option>
                 ))}
               </select>
-              {errores.cliente && (
-                <span className="form-error">{errores.cliente}</span>
+              {errores.idCliente && (
+                <span className="form-error">{errores.idCliente}</span>
               )}
             </div>
+
+            {deudasCliente.length > 1 && (
+              <div className="form-field">
+                <label>Deuda</label>
+                <select
+                  name="idDeuda"
+                  value={form.idDeuda}
+                  onChange={handleChange}
+                >
+                  <option value="">Seleccionar deuda ...</option>
+                  {deudasCliente
+                    .filter((d) => Number(d.saldoPendiente) > 0)
+                    .map((d) => (
+                      <option key={d.idDeuda} value={d.idDeuda}>
+                        Deuda #{d.idDeuda} - Saldo{" "}
+                        {formatoMoneda(d.saldoPendiente)}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            )}
+
+            {errores.idDeuda && (
+              <span className="form-error">{errores.idDeuda}</span>
+            )}
 
             <div className="form-field">
               <label>Monto</label>
@@ -315,11 +386,11 @@ const PagosPage = () => {
                 style={errores.metodoPago ? { borderColor: "#ef4444" } : {}}
               >
                 <option value="">Seleccionar método ...</option>
-                <option>Transferencia</option>
-                <option>Efectivo</option>
-                <option>Tarjeta</option>
-                <option>Yape</option>
-                <option>Plin</option>
+                <option value="Transferencia">Transferencia</option>
+                <option value="Efectivo">Efectivo</option>
+                <option value="Tarjeta">Tarjeta</option>
+                <option value="Yape">Yape</option>
+                <option value="Plin">Plin</option>
               </select>
               {errores.metodoPago && (
                 <span className="form-error">{errores.metodoPago}</span>

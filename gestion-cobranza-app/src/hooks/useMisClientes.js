@@ -17,7 +17,10 @@ const mapCliente = (c) => ({
   riesgo: capitalizar(c.riesgo ?? "BAJO"),
   estado: capitalizar(c.estadoCliente ?? "NUEVO"),
   diasAtraso: c.diasAtraso ?? "",
-  deudaPendiente: c.deudaPendiente ?? "-",
+  deudaPendiente:
+    c.deudaPendiente !== null && c.deudaPendiente !== undefined
+      ? `S/. ${Number(c.deudaPendiente).toLocaleString()}`
+      : "-",
 });
 
 const useMisClientes = () => {

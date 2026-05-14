@@ -13,79 +13,26 @@ import {
   PhoneCall,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
+import useMiClienteDetalle from "../../hooks/useMiClienteDetalle";
+import { registrarGestion } from "../../services/gestionesService";
 import "../../styles/miClienteDetalle.css";
 
-const clienteEjemplo = {
-  id: 1,
-  nombreCompleto: "Carlos Mendoza Silva",
-  deudaTotal: "S./ 15,000",
-  deudaPendiente: "S./ 12,280",
-  diasAtraso: 45,
-  scoreRiesgo: 40,
-  correo: "carlos.mendoza@gmail.com",
-  telefono: "+51 998 745 612",
-  fechaRegistro: "14 ago 2025",
-  estadoActual: "Contactado",
-  ultimoContacto: "14 marz 2026",
-  proximoSeguimiento: "24 marz 2026",
-  asesorActual: "Ronny Sanchez",
-  bitacora: [
-    {
-      tipo: "Acuerdo",
-      descripcion: "Acuerdo de pago: 4 cuotas de S/ 3,750",
-      fecha: "15 mar 2026 10:45",
-    },
-    {
-      tipo: "Llamada",
-      descripcion: "Contacto telefónico. Cliente solicita plan de pagos.",
-      fecha: "15 mar 2026 10:30",
-    },
-  ],
-  historialPagos: [
-    {
-      monto: "S/ 3,000",
-      fecha: "09 feb 2026",
-      metodo: "transferencia",
-      descripcion: "Pago parcial acordado",
-    },
-  ],
-  timeline: [
-    {
-      tipo: "Acuerdo",
-      descripcion: "Acuerdo de pago: 4 cuotas de S/ 3,750",
-      fecha: "15 mar 2026 10:45",
-    },
-    {
-      tipo: "Llamada",
-      descripcion: "Contacto telefónico. Cliente solicita plan de pagos.",
-      fecha: "15 mar 2026 10:30",
-    },
-    {
-      tipo: "Pago Recibido",
-      descripcion: "Pago de S/ 3,750 vía transferencia",
-      fecha: "09 feb 2026 19:00",
-    },
-  ],
-};
+const formatoMoneda = (valor) => `S/. ${Number(valor ?? 0).toLocaleString()}`;
 
 const MiClienteDetallePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const cliente = clienteEjemplo;
+  const { cliente, loading, error, cargarDetalle } = useMiClienteDetalle(id);
+
   const [tabActiva, setTabActiva] = useState("bitacora");
   const [modalGestion, setModalGestion] = useState(false);
-  const [modalPago, setModalPago] = useState(false);
   const [toast, setToast] = useState("");
+
   const [formGestion, setFormGestion] = useState({
     tipo: "Llamada",
     descripcion: "",
     resultado: "",
     proximaGestion: "",
-  });
-  const [formPago, setFormPago] = useState({
-    monto: "",
-    metodo: "",
-    descripcion: "",
   });
 
   const mostrarToast = (msg) => {
@@ -93,30 +40,55 @@ const MiClienteDetallePage = () => {
     setTimeout(() => setToast(""), 3000);
   };
 
-  const handleGestion = () => {
-    mostrarToast("Gestión registrada correctamente");
-    setModalGestion(false);
-    setFormGestion({
-      tipo: "Llamada",
-      descripcion: "",
-      resultado: "",
-      proximaGestion: "",
-    });
-  };
+  const handleGestion = async () => {
+    if (!formGestion.descripcion.trim()) {
+      mostrarToast("La descripción es obligatoria.");
+      return;
+    }
 
-  const handlePago = () => {
-    mostrarToast("Pago registrado correctamente");
-    setModalPago(false);
-    setFormPago({ monto: "", metodo: "", descripcion: "" });
+    try {
+      await registrarGestion({
+        idCliente: Number(id),
+        tipoGestion: formGestion.tipo,
+        descripcion: formGestion.descripcion.trim(),
+        resultado: formGestion.resultado.trim(),
+        proximaAccion: formGestion.proximaGestion || null,
+      });
+      mostrarToast("Gestión registrada correctamente");
+      setModalGestion(false);
+
+      setFormGestion({
+        tipo: "Llamada",
+        descripcion: "",
+        resultado: "",
+        proximaGestion: "",
+      });
+      await cargarDetalle();
+    } catch (err) {
+      mostrarToast(
+        err.response?.data?.message || "No se pudo registrar la gestión.",
+      );
+    }
   };
 
   const getTipoIcon = (tipo) => {
-    if (tipo === "Llamada") return <PhoneCall size={14} color="#3b82f6" />;
-    if (tipo === "Acuerdo") return <CheckCircle size={14} color="#22c55e" />;
-    if (tipo === "Pago Recibido")
+    if (tipo === "Llamada" || tipo === "LLAMADA")
+      return <PhoneCall size={14} color="#3b82f6" />;
+
+    if (tipo === "Acuerdo" || tipo === "ACUERDO")
+      return <CheckCircle size={14} color="#22c55e" />;
+
+    if (tipo === "PAGO" || tipo === "Pago registrado")
       return <DollarSign size={14} color="#a855f7" />;
+
     return <MessageSquare size={14} color="#64748b" />;
   };
+
+  if (loading) return <div>Cargando detalle del cliente...</div>;
+
+  if (error) return <p style={{ color: "red" }}>{error}</p>;
+
+  if (!cliente) return <p>No se encontró información del cliente.</p>;
 
   return (
     <div>
@@ -131,6 +103,7 @@ const MiClienteDetallePage = () => {
           <h1>{cliente.nombreCompleto}</h1>
           <p>Detalle completo del cliente</p>
         </div>
+
         <div style={{ display: "flex", gap: "10px" }}>
           <button className="btn-nuevo" onClick={() => setModalGestion(true)}>
             <MessageSquare size={16} /> Nueva Gestión
@@ -142,38 +115,43 @@ const MiClienteDetallePage = () => {
         <div className="detalle-metric-card">
           <div className="detalle-metric-info">
             <p>Deuda Total</p>
-            <div className="detalle-metric-valor">{cliente.deudaTotal}</div>
+            <div className="detalle-metric-valor">
+              {formatoMoneda(cliente.deudaTotal)}
+            </div>
           </div>
           <div className="detalle-metric-icon">
             <DollarSign size={16} color="#a855f7" />
           </div>
         </div>
+
         <div className="detalle-metric-card">
           <div className="detalle-metric-info">
             <p>Deuda pendiente</p>
             <div className="detalle-metric-valor rojo">
-              {cliente.deudaPendiente}
+              {formatoMoneda(cliente.deudaPendiente)}
             </div>
           </div>
           <div className="detalle-metric-icon">
             <TrendingUp size={16} color="#ef4444" />
           </div>
         </div>
+
         <div className="detalle-metric-card">
           <div className="detalle-metric-info">
             <p>Días de Atraso</p>
             <div className="detalle-metric-valor rojo">
-              {cliente.diasAtraso}
+              {cliente.diasAtraso ?? 0}
             </div>
           </div>
           <div className="detalle-metric-icon">
             <Clock size={16} color="#3b82f6" />
           </div>
         </div>
+
         <div className="detalle-metric-card">
           <div className="detalle-metric-info">
             <p>Score de Riesgo</p>
-            <div className="detalle-metric-valor">{cliente.scoreRiesgo}</div>
+            <div className="detalle-metric-valor">{cliente.riesgo}</div>
           </div>
           <div className="detalle-metric-icon">
             <AlertCircle size={16} color="#f59e0b" />
@@ -186,40 +164,46 @@ const MiClienteDetallePage = () => {
           <h3>Información de Contacto</h3>
           <div className="detalle-info-row">
             <Mail size={14} color="#94a3b8" />
-            {cliente.correo}
+            {cliente.correo || "-"}
           </div>
           <div className="detalle-info-row">
             <Phone size={14} color="#94a3b8" />
-            {cliente.telefono}
+            {cliente.telefono || "-"}
           </div>
           <div className="detalle-info-row">
             <Calendar size={14} color="#94a3b8" />
-            Registro: {cliente.fechaRegistro}
+            Registro: {cliente.fechaRegistro || "-"}
           </div>
         </div>
+
         <div className="detalle-info-card">
           <h3>Estado y Seguimiento</h3>
           <div className="estado-label">Estado Actual</div>
-          <div className="estado-valor">{cliente.estadoActual}</div>
+          <div className="estado-valor">{cliente.estadoActual || "-"}</div>
+
           <div className="estado-label">Último Contacto</div>
-          <div className="estado-fecha">{cliente.ultimoContacto}</div>
+          <div className="estado-fecha">{cliente.ultimoContacto || "-"}</div>
+
           <div className="estado-label">Próximo Seguimiento</div>
-          <div className="estado-fecha">{cliente.proximoSeguimiento}</div>
+          <div className="estado-fecha">
+            {cliente.proximoSeguimiento || "-"}
+          </div>
         </div>
+
         <div className="detalle-info-card">
           <h3>Asesor Actual</h3>
-          <div className="detalle-info-row">{cliente.asesorActual}</div>
+          <div className="detalle-info-row">{cliente.asesorActual || "-"}</div>
           <div className="detalle-info-row">
             <Mail size={14} color="#94a3b8" />
-            {cliente.correo}
+            {cliente.correo || "-"}
           </div>
           <div className="detalle-info-row">
             <Phone size={14} color="#94a3b8" />
-            {cliente.telefono}
+            {cliente.telefono || "-"}
           </div>
           <div className="detalle-info-row">
             <Calendar size={14} color="#94a3b8" />
-            Registro: {cliente.fechaRegistro}
+            Registro: {cliente.fechaRegistro || "-"}
           </div>
         </div>
       </div>
@@ -258,14 +242,23 @@ const MiClienteDetallePage = () => {
             >
               Bitácora de Gestión
             </p>
-            {cliente.bitacora.map((item, i) => (
+
+            {(cliente.bitacora || []).length === 0 && (
+              <p>No hay gestiones registradas.</p>
+            )}
+
+            {(cliente.bitacora || []).map((item, i) => (
               <div className="bitacora-item" key={i}>
-                <div className="bitacora-icon">{getTipoIcon(item.tipo)}</div>
+                <div className="bitacora-icon">
+                  {getTipoIcon(item.tipoGestion || item.titulo)}
+                </div>
                 <div className="bitacora-info">
-                  <strong>{item.tipo}</strong>
+                  <strong>{item.titulo || item.tipoGestion}</strong>
                   <span>{item.descripcion}</span>
                 </div>
-                <span className="bitacora-fecha">{item.fecha}</span>
+                <span className="bitacora-fecha">
+                  {item.fechaTexto || item.fecha}
+                </span>
               </div>
             ))}
           </div>
@@ -283,14 +276,19 @@ const MiClienteDetallePage = () => {
             >
               Historial de Pagos
             </p>
-            {cliente.historialPagos.map((pago, i) => (
+
+            {(cliente.historialPagos || []).length === 0 && (
+              <p>No hay pagos registrados.</p>
+            )}
+
+            {(cliente.historialPagos || []).map((pago, i) => (
               <div className="pago-item" key={i}>
                 <div className="pago-info">
-                  <strong>{pago.monto}</strong>
+                  <strong>{formatoMoneda(pago.monto)}</strong>
                   <span>
-                    {pago.fecha} • {pago.metodo}
+                    {pago.fechaTexto || pago.fechaPago} • {pago.metodoPago}
                   </span>
-                  <span>{pago.descripcion}</span>
+                  <span>{pago.nota || "-"}</span>
                 </div>
                 <CheckCircle size={18} color="#22c55e" />
               </div>
@@ -310,11 +308,18 @@ const MiClienteDetallePage = () => {
             >
               Timeline Completo
             </p>
-            {cliente.timeline.map((item, i) => (
+
+            {(cliente.timeline || []).length === 0 && (
+              <p>No hay eventos en el timeline.</p>
+            )}
+
+            {(cliente.timeline || []).map((item, i) => (
               <div className="timeline-item" key={i}>
-                <div className="timeline-icon">{getTipoIcon(item.tipo)}</div>
+                <div className="timeline-icon">
+                  {getTipoIcon(item.tipo || item.titulo)}
+                </div>
                 <div className="timeline-info">
-                  <strong>{item.tipo}</strong>
+                  <strong>{item.titulo || item.tipo}</strong>
                   <span>{item.descripcion}</span>
                 </div>
                 <span className="timeline-fecha">{item.fecha}</span>
@@ -331,6 +336,7 @@ const MiClienteDetallePage = () => {
             <p className="modal-subtitle">
               Registra una nueva interacción con el cliente
             </p>
+
             <div className="form-field">
               <label>Tipo de Gestión</label>
               <select
@@ -346,6 +352,7 @@ const MiClienteDetallePage = () => {
                 <option>Otro</option>
               </select>
             </div>
+
             <div className="form-field">
               <label>Descripción</label>
               <textarea
@@ -359,6 +366,7 @@ const MiClienteDetallePage = () => {
                 }
               />
             </div>
+
             <div className="form-field">
               <label>Resultado</label>
               <input
@@ -369,6 +377,7 @@ const MiClienteDetallePage = () => {
                 }
               />
             </div>
+
             <div className="form-field">
               <label>Programar próxima gestión</label>
               <input
@@ -382,6 +391,7 @@ const MiClienteDetallePage = () => {
                 }
               />
             </div>
+
             <div className="modal-actions">
               <button
                 className="btn-cancelar"

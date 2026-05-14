@@ -19,13 +19,15 @@ const mapCliente = (c) => ({
   asesorAsignado: c.asesor ?? "",
   riesgo: capitalizar(c.riesgo ?? "BAJO"),
   estado: capitalizar(c.estadoCliente ?? "NUEVO"),
-  diasAtraso: "",
+  deudaPendiente:
+    c.deudaPendiente !== null && c.deudaPendiente !== undefined
+      ? `S/. ${Number(c.deudaPendiente).toLocaleString()}`
+      : "-",
+  diasAtraso: c.diasAtraso ?? 0,
 });
 
 const capitalizar = (texto) =>
-  texto
-    ? texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase()
-    : "";
+  texto ? texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase() : "";
 
 const useClientes = () => {
   const [clientes, setClientes] = useState([]);
@@ -39,7 +41,9 @@ const useClientes = () => {
       setClientes((data || []).map(mapCliente));
       setError("");
     } catch (err) {
-      setError(err.response?.data?.message || "No se pudieron cargar los clientes.");
+      setError(
+        err.response?.data?.message || "No se pudieron cargar los clientes.",
+      );
       setClientes([]);
     } finally {
       setLoading(false);
@@ -52,14 +56,23 @@ const useClientes = () => {
 
   const agregarCliente = async (cliente) => {
     const response = await crearCliente(cliente);
-    const nuevoCliente = response.cliente ? mapCliente(response.cliente) : mapCliente(response);
+
+    const nuevoCliente = mapCliente({
+      ...(response.cliente ?? response),
+      deudaPendiente: response.deuda?.saldoPendiente ?? 0,
+      diasAtraso: response.deuda?.diasAtraso ?? 0,
+    });
+
     setClientes((prev) => [...prev, nuevoCliente]);
+
     return nuevoCliente;
   };
 
   const editarCliente = async (id, cliente) => {
     const response = await actualizarCliente(id, cliente);
-    const actualizado = response.cliente ? mapCliente(response.cliente) : mapCliente(response);
+    const actualizado = response.cliente
+      ? mapCliente(response.cliente)
+      : mapCliente(response);
 
     setClientes((prev) => prev.map((c) => (c.id === id ? actualizado : c)));
     return actualizado;
