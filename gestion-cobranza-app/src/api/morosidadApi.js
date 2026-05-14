@@ -1,11 +1,6 @@
 import axiosClient from "./axiosClient";
 
-export const getMorosidadApi = async () => {
-  const response = await axiosClient.get("/morosidad");
-  return response.data;
-};
-
-export const getMorosidadMetricasApi = async () => {
-  const response = await axiosClient.get("/morosidad/metricas");
+export const getDashboardMorosidadApi = async () => {
+  const response = await axiosClient.get("/Morosidad/dashboard");
   return response.data;
 };

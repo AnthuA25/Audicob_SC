@@ -16,13 +16,14 @@ import {
 import "../../styles/morosidad.css";
 
 const MorosidadPage = () => {
-  const { morosidad, metricas, loading } = useMorosidad();
+  const { morosidad, metricas, loading, error } = useMorosidad();
   const [busqueda, setBusqueda] = useState("");
 
   const filtrados = morosidad.filter(
     (m) =>
       m.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-      m.email.toLowerCase().includes(busqueda.toLowerCase()),
+      m.email.toLowerCase().includes(busqueda.toLowerCase()) ||
+      String(m.id).includes(busqueda),
   );
 
   const getDiasClass = (dias) => {
@@ -44,6 +45,8 @@ const MorosidadPage = () => {
           <FileBarChart size={16} /> Generar Reporte
         </button>
       </div>
+      
+      {error && <p style={{ color: "red" }}>{error}</p>}
 
       <div className="morosidad-metricas">
         <div className="morosidad-metric-card">
@@ -151,6 +154,11 @@ const MorosidadPage = () => {
             ))}
           </tbody>
         </table>
+        {filtrados.length === 0 && (
+          <p style={{ padding: "16px", color: "#64748b" }}>
+            No se encontraron clientes morosos.
+          </p>
+        )}
       </div>
     </div>
   );

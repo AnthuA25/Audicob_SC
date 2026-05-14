@@ -1,19 +1,22 @@
 const coloresEstado = {
-  Contactado: { bg: "#ede9fe", color: "#7c3aed" },
-  Negociación: { bg: "#fef9c3", color: "#ca8a04" },
+  CONTACTADO: { bg: "#ede9fe", color: "#7c3aed" },
+  NEGOCIACION: { bg: "#fef9c3", color: "#ca8a04" },
   "Promesa de Pago": { bg: "#dbeafe", color: "#2563eb" },
-  Pagado: { bg: "#dcfce7", color: "#16a34a" },
-  Moroso: { bg: "#fee2e2", color: "#dc2626" },
+  PAGADO: { bg: "#dcfce7", color: "#16a34a" },
+  MOROSO: { bg: "#fee2e2", color: "#dc2626" },
 };
 
 const coloresRiesgo = {
-  Alto: { bg: "#fee2e2", color: "#dc2626" },
-  Medio: { bg: "#fef9c3", color: "#ca8a04" },
-  Bajo: { bg: "#dcfce7", color: "#16a34a" },
+  ALTO: { bg: "#fee2e2", color: "#dc2626" },
+  MEDIO: { bg: "#fef9c3", color: "#ca8a04" },
+  BAJO: { bg: "#dcfce7", color: "#16a34a" },
 };
 
 export const EstadoBadge = ({ estado }) => {
-  const estilo = coloresEstado[estado] || { bg: "#f1f5f9", color: "#64748b" };
+
+   const estadoNormalizado = estado?.toUpperCase();
+  
+  const estilo = coloresEstado[estadoNormalizado] || { bg: "#f1f5f9", color: "#64748b" };
   return (
     <span
       style={{
@@ -31,7 +34,8 @@ export const EstadoBadge = ({ estado }) => {
 };
 
 export const RiesgoBadge = ({ riesgo }) => {
-  const estilo = coloresRiesgo[riesgo] || { bg: "#f1f5f9", color: "#64748b" };
+  const riesgoNormalizado = riesgo?.toUpperCase();
+  const estilo = coloresRiesgo[riesgoNormalizado] || { bg: "#f1f5f9", color: "#64748b" };
   return (
     <span
       style={{
