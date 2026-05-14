@@ -221,4 +221,33 @@ public class ImportacionesController : ControllerBase
 
         return Ok(importaciones);
     }
+
+    [HttpGet("{id}/descargar")]
+    public async Task<IActionResult> DescargarImportacion(int id)
+    {
+        var importacion = await _context.ImportacionDatos
+            .FirstOrDefaultAsync(i =>
+                i.IdImportacion == id &&
+                i.Activo &&
+                !i.Eliminado);
+
+        if (importacion == null)
+            return NotFound(new { message = "Importación no encontrada." });
+
+        if (string.IsNullOrWhiteSpace(importacion.RutaArchivo))
+            return NotFound(new { message = "La importación no tiene archivo asociado." });
+
+        if (!System.IO.File.Exists(importacion.RutaArchivo))
+            return NotFound(new { message = "El archivo ya no existe en el servidor." });
+
+        var bytes = await System.IO.File.ReadAllBytesAsync(importacion.RutaArchivo);
+
+        return File(
+            bytes,
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            importacion.NombreArchivo
+        );
+    }
+
+
 }
