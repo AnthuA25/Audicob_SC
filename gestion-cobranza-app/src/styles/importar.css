@@ -1,0 +1,248 @@
+.importar-header {
+  margin-bottom: 1.5rem;
+}
+
+.importar-header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1e3a5f;
+  margin-bottom: 4px;
+  text-align: left;
+}
+
+.importar-header p {
+  font-size: 13px;
+  color: #94a3b8;
+  text-align: left;
+}
+
+.importar-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.importar-card h2 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e3a5f;
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.instrucciones-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.instruccion-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.instruccion-numero {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  background: #1e3a5f;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.instruccion-texto strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e3a5f;
+  margin-bottom: 2px;
+  text-align: left;
+}
+
+.instruccion-texto span {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.plantilla-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.plantilla-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.plantilla-icon {
+  width: 40px;
+  height: 40px;
+  background: #f0fdf4;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.plantilla-texto strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e3a5f;
+}
+
+.plantilla-texto span {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.btn-descargar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #1e3a5f;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-descargar:hover {
+  background: #2563eb;
+}
+
+.dropzone {
+  border: 2px dashed #e2e8f0;
+  border-radius: 10px;
+  padding: 2.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+
+.dropzone:hover {
+  border-color: #3b82f6;
+  background: #f8fafc;
+}
+
+.dropzone.activo {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.dropzone p {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.dropzone small {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.btn-seleccionar {
+  background: #1e3a5f;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: background 0.15s;
+}
+
+.btn-seleccionar:hover {
+  background: #2563eb;
+}
+
+.archivo-seleccionado {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 1rem;
+  padding: 10px 14px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #16a34a;
+}
+
+.importaciones-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.importacion-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.importacion-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.importacion-icon {
+  width: 36px;
+  height: 36px;
+  background: #eff6ff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.importacion-texto strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e3a5f;
+}
+
+.importacion-texto span {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.btn-reimportar {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #3b82f6;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.btn-reimportar:hover {
+  background: #eff6ff;
+}
