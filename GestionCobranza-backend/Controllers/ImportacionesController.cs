@@ -237,10 +237,18 @@ public class ImportacionesController : ControllerBase
         if (string.IsNullOrWhiteSpace(importacion.RutaArchivo))
             return NotFound(new { message = "La importación no tiene archivo asociado." });
 
-        if (!System.IO.File.Exists(importacion.RutaArchivo))
-            return NotFound(new { message = "El archivo ya no existe en el servidor." });
+        var rutaArchivo = importacion.RutaArchivo;
 
-        var bytes = await System.IO.File.ReadAllBytesAsync(importacion.RutaArchivo);
+        if (!System.IO.File.Exists(rutaArchivo))
+        {
+            return NotFound(new
+            {
+                message = "El archivo no existe en el servidor.",
+                ruta = rutaArchivo
+            });
+        }
+
+        var bytes = await System.IO.File.ReadAllBytesAsync(rutaArchivo);
 
         return File(
             bytes,
@@ -248,6 +256,5 @@ public class ImportacionesController : ControllerBase
             importacion.NombreArchivo
         );
     }
-
 
 }
