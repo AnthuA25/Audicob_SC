@@ -303,13 +303,13 @@ public class ClientesController : ControllerBase
     {
         var idUsuarioClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-        if (string.IsNullOrWhiteSpace(idUsuarioClaim))
+        if (string.IsNullOrWhiteSpace(idUsuarioClaim) || !int.TryParse(idUsuarioClaim, out var idAsesor))
             return Unauthorized(new { message = "No se pudo identificar al usuario autenticado." });
 
-        var idAsesor = int.Parse(idUsuarioClaim);
 
         var query = _context.Clientes
             .Include(c => c.IdAsesorNavigation)
+            .Include(c => c.Deuda)
             .Where(c => c.Activo && !c.Eliminado && c.IdAsesor == idAsesor);
 
         if (!string.IsNullOrWhiteSpace(busqueda))
@@ -339,7 +339,18 @@ public class ClientesController : ControllerBase
                 c.Riesgo,
                 Asesor = c.IdAsesorNavigation != null
                     ? c.IdAsesorNavigation.Nombres + " " + c.IdAsesorNavigation.Apellidos
-                    : null
+                    : null,
+                DeudaPendiente = c.Deuda
+                .Where(d => d.Activo && !d.Eliminado)
+                .Sum(d => d.SaldoPendiente),
+
+                DiasAtraso = c.Deuda
+                .Where(d => d.Activo && !d.Eliminado)
+                .Any()
+                    ? c.Deuda
+                        .Where(d => d.Activo && !d.Eliminado)
+                        .Max(d => d.DiasAtraso)
+                    : 0
             })
             .ToListAsync();
 
