@@ -3,6 +3,7 @@ using GestionCobranza_backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace GestionCobranza_backend.Controllers;
 
@@ -260,61 +261,116 @@ public class ClientesController : ControllerBase
         return Ok(clientes);
     }
     [HttpGet("mis-clientes/{id}")]
-    [Authorize(Roles = "Asesor")]
-    public async Task<IActionResult> ObtenerMiClienteDetalle(int id)
+    [Authorize(Roles = "Asesor,Administrador")]
+    public async Task<IActionResult> ObtenerMiClientePorId(int idCliente)
     {
-        var idUsuarioClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var idUsuarioClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        if (string.IsNullOrWhiteSpace(idUsuarioClaim))
-            return Unauthorized(new { message = "No se pudo identificar al asesor autenticado." });
+        if (string.IsNullOrWhiteSpace(idUsuarioClaim) || !int.TryParse(idUsuarioClaim, out var idUsuario))
+            return Unauthorized(new { message = "No se pudo identificar al usuario autenticado." });
 
-        var idAsesor = int.Parse(idUsuarioClaim);
+        var rol = User.FindFirst(ClaimTypes.Role)?.Value;
 
         var cliente = await _context.Clientes
             .Include(c => c.IdAsesorNavigation)
-            .Where(c =>
-                c.IdCliente == id &&
-                c.Activo &&
-                !c.Eliminado &&
-                c.IdAsesor == idAsesor)
-            .Select(c => new
-            {
-                idCliente = c.IdCliente,
-                nombreCompleto = c.Nombres + " " + c.Apellidos,
-                correo = c.Correo,
-                telefono = c.Telefono,
-                fechaRegistro = c.FechaRegistro.ToString("dd MMM yyyy"),
-                asesorActual = c.IdAsesorNavigation != null
-                    ? c.IdAsesorNavigation.Nombres + " " + c.IdAsesorNavigation.Apellidos
-                    : "-",
-                deudaTotal = "S/. 15,000",
-                deudaPendiente = "S/. 12,280",
-                diasAtraso = 45,
-                scoreRiesgo = 40,
-                estadoActual = "Contactado",
-                ultimoContacto = "14 mar 2026",
-                proximoSeguimiento = "24 mar 2026",
-                bitacora = new[]
-                {
-                new
-                {
-                    titulo = "Acuerdo",
-                    descripcion = "Acuerdo de pago: 4 cuotas de S/. 3,750",
-                    fecha = "15 mar 2026 10:45"
-                },
-                new
-                {
-                    titulo = "Llamada",
-                    descripcion = "Contacto telefónico. Cliente solicita plan de pagos.",
-                    fecha = "15 mar 2026 10:30"
-                }
-                }
-            })
+            .Include(c => c.Deuda)
+                .ThenInclude(d => d.Pagos)
+            .Include(c => c.GestionCobranzas)
+            .Where(c => c.IdCliente == idCliente && c.Activo && !c.Eliminado)
             .FirstOrDefaultAsync();
 
         if (cliente == null)
-            return NotFound(new { message = "Cliente no encontrado o no pertenece al asesor." });
+            return NotFound(new { message = "Cliente no encontrado." });
 
-        return Ok(cliente);
+        if (rol == "Asesor" && cliente.IdAsesor != idUsuario)
+            return Forbid();
+
+        var deudasActivas = cliente.Deuda
+            .Where(d => d.Activo && !d.Eliminado)
+            .ToList();
+
+        var deudaTotal = deudasActivas.Sum(d => d.MontoTotal);
+        var deudaPendiente = deudasActivas.Sum(d => d.SaldoPendiente);
+        var diasAtraso = deudasActivas.Any() ? deudasActivas.Max(d => d.DiasAtraso) : 0;
+
+        var bitacora = cliente.GestionCobranzas
+            .Where(g => g.Activo && !g.Eliminado)
+            .OrderByDescending(g => g.FechaGestion)
+            .Select(g => new
+            {
+                idGestion = g.IdGestion,
+                titulo = g.TipoGestion,
+                descripcion = g.Descripcion,
+                resultado = g.Resultado,
+                fecha = g.FechaGestion.ToString("dd MMM yyyy HH:mm"),
+                proximaAccion = g.ProximaAccion
+            })
+            .ToList();
+
+        var historialPagos = deudasActivas
+            .SelectMany(d => d.Pagos)
+            .Where(p => p.Activo && !p.Eliminado && p.EstadoPago == "CONFIRMADO")
+            .OrderByDescending(p => p.FechaPago)
+            .Select(p => new
+            {
+                idPago = p.IdPago,
+                monto = p.Monto,
+                fechaPago = p.FechaPago,
+                metodoPago = p.MetodoPago,
+                nota = p.Nota,
+                estadoPago = p.EstadoPago
+            })
+            .ToList();
+
+        var timelineGestiones = bitacora.Select(g => new
+        {
+            tipo = "GESTION",
+            titulo = g.titulo,
+            descripcion = g.descripcion,
+            fecha = g.fecha
+        });
+
+        var timelinePagos = historialPagos.Select(p => new
+        {
+            tipo = "PAGO",
+            titulo = "Pago Recibido",
+            descripcion = $"Pago de S/ {p.monto} vía {p.metodoPago}",
+            fecha = p.fechaPago.ToString("dd MMM yyyy")
+        });
+
+        var timeline = timelineGestiones
+            .Concat(timelinePagos)
+            .OrderByDescending(t => t.fecha)
+            .ToList();
+
+        return Ok(new
+        {
+            idCliente = cliente.IdCliente,
+            nombreCompleto = cliente.Nombres + " " + cliente.Apellidos,
+            correo = cliente.Correo,
+            telefono = cliente.Telefono,
+            fechaRegistro = cliente.FechaRegistro.ToString("dd MMM yyyy"),
+            asesorActual = cliente.IdAsesorNavigation != null
+                ? cliente.IdAsesorNavigation.Nombres + " " + cliente.IdAsesorNavigation.Apellidos
+                : null,
+            deudaTotal = deudaTotal,
+            deudaPendiente = deudaPendiente,
+            diasAtraso = diasAtraso,
+            scoreRiesgo = cliente.Riesgo,
+            estadoActual = cliente.EstadoCliente,
+            ultimoContacto = cliente.GestionCobranzas
+                .Where(g => g.Activo && !g.Eliminado)
+                .OrderByDescending(g => g.FechaGestion)
+                .Select(g => g.FechaGestion.ToString("dd MMM yyyy"))
+                .FirstOrDefault(),
+            proximoSeguimiento = cliente.GestionCobranzas
+                .Where(g => g.Activo && !g.Eliminado && g.ProximaAccion != null)
+                .OrderByDescending(g => g.ProximaAccion)
+                .Select(g => g.ProximaAccion)
+                .FirstOrDefault(),
+            bitacora,
+            historialPagos,
+            timeline
+        });
     }
 }
