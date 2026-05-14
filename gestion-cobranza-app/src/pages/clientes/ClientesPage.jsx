@@ -139,7 +139,7 @@ const ClientesPage = () => {
                 </td>
                 <td>{cliente.asesorAsignado || "-"}</td>
                 <td>
-                  {cliente.deudaTotal ? `S/. ${cliente.deudaTotal}` : "-"}
+                  {cliente.deudaTotal ? `${cliente.deudaTotal}` : "-"}
                 </td>
                 <td>
                   <span className="dias-atraso pendiente">
