@@ -36,8 +36,9 @@
 
 .pago-metric-info p {
   font-size: 13px;
-   color: "black",
-  margin-bottom: 6px;
+  color:
+    "black",
+    margin-bottom 6px;
 }
 
 .pago-metric-valor {
