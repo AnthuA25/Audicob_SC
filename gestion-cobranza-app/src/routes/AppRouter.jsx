@@ -9,6 +9,7 @@ import DashboardAsesorPage from "../pages/dashboard/DashboardAsesorPage";
 import MisClientesPage from "../pages/clientes/MisClientesPage";
 import MiClienteDetallePage from "../pages/clientes/MiClienteDetallePage";
 import MorosidadPage from "../pages/morosidad/MorosidadPage";
+import ImportarPage from "../pages/importar/ImportarPage";
 import useAuth from "../hooks/useAuth";
 import { ROUTES } from "../constants/routes";
 
@@ -82,12 +83,27 @@ const AppRouter = () => {
               </ProtectedRoute>
             }
           />
-          <Route path={ROUTES.MOROSIDAD} element={<MorosidadPage />} />
+          <Route
+            path={ROUTES.MOROSIDAD}
+            element={
+              <ProtectedRoute allowedRoles={["Administrador"]}>
+                <MorosidadPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path={ROUTES.MIS_CLIENTES_DETALLE}
             element={
               <ProtectedRoute allowedRoles={["Asesor"]}>
                 <MiClienteDetallePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path={ROUTES.IMPORTAR}
+            element={
+              <ProtectedRoute allowedRoles={["Administrador"]}>
+                <ImportarPage />
               </ProtectedRoute>
             }
           />
