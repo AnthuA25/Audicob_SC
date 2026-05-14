@@ -120,7 +120,7 @@ const ClientesPage = () => {
               <th>Cliente</th>
               <th>Contacto</th>
               <th>Asesor Asignado</th>
-              <th>Deuda Pendiente</th>
+              <th>Deuda Total</th>
               <th>Días Atraso</th>
               <th>Riesgo</th>
               <th>Estado</th>
@@ -138,7 +138,9 @@ const ClientesPage = () => {
                   </div>
                 </td>
                 <td>{cliente.asesorAsignado || "-"}</td>
-                <td>{cliente.deudaPendiente || "-"}</td>
+                <td>
+                  {cliente.deudaTotal ? `S/. ${cliente.deudaTotal}` : "-"}
+                </td>
                 <td>
                   <span className="dias-atraso pendiente">
                     {cliente.diasAtraso > 0

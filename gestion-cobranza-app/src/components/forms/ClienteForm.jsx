@@ -83,10 +83,10 @@ const ClienteForm = ({
     if (!form.idAsesor) nuevosErrores.idAsesor = "Selecciona un asesor.";
 
     if (!clienteEditar && !form.montoDeuda)
-      nuevosErrores.montoDeuda = "La deuda pendiente es obligatoria.";
+      nuevosErrores.montoDeuda = "La deuda total es obligatoria.";
 
     if (!clienteEditar && Number(form.montoDeuda) <= 0)
-      nuevosErrores.montoDeuda = "La deuda pendiente debe ser mayor a 0.";
+      nuevosErrores.montoDeuda = "La deuda total debe ser mayor a 0.";
 
     if (!clienteEditar && !form.fechaVencimiento)
       nuevosErrores.fechaVencimiento = "La fecha de pago es obligatoria.";
@@ -215,7 +215,7 @@ const ClienteForm = ({
         {!clienteEditar && (
           <div className="form-row">
             <div className="form-field">
-              <label>Deuda Pendiente *</label>
+              <label>Deuda Total *</label>
               <input
                 type="number"
                 name="montoDeuda"
