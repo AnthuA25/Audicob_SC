@@ -19,15 +19,20 @@ const mapCliente = (c) => ({
   asesorAsignado: c.asesor ?? "",
   riesgo: capitalizar(c.riesgo ?? "BAJO"),
   estado: capitalizar(c.estadoCliente ?? "NUEVO"),
-  deudaPendiente:
-    c.deudaPendiente !== null && c.deudaPendiente !== undefined
-      ? `S/. ${Number(c.deudaPendiente).toLocaleString()}`
-      : "-",
+  deudaTotal: formatearMonto(c.deudaTotal),
   diasAtraso: c.diasAtraso ?? 0,
 });
 
 const capitalizar = (texto) =>
   texto ? texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase() : "";
+
+const formatearMonto = (monto) => {
+  const numero = Number(monto ?? 0);
+  return `S/. ${numero.toLocaleString("es-PE", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
 
 const useClientes = () => {
   const [clientes, setClientes] = useState([]);
@@ -59,7 +64,7 @@ const useClientes = () => {
 
     const nuevoCliente = mapCliente({
       ...(response.cliente ?? response),
-      deudaPendiente: response.deuda?.saldoPendiente ?? 0,
+      deudaTotal: response.deuda?.montoTotal ?? cliente.montoDeuda ?? 0,
       diasAtraso: response.deuda?.diasAtraso ?? 0,
     });
 
