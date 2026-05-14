@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 using System.ComponentModel.DataAnnotations;
 
-namespace GestionCobranza_backend.Dtos.Pago;
+namespace GestionCobranza_backend.Dtos.Pagos;
 
 public class RegistrarPagoDto
 {
