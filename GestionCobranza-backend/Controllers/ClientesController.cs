@@ -40,9 +40,15 @@ public class ClientesController : ControllerBase
                 Asesor = c.IdAsesorNavigation != null
                     ? c.IdAsesorNavigation.Nombres + " " + c.IdAsesorNavigation.Apellidos
                     : null,
+
+                DeudaTotal = c.Deuda
+                .Where(d => d.Activo && !d.Eliminado)
+                .Sum(d => d.MontoTotal),
+                
                 DeudaPendiente = c.Deuda
                 .Where(d => d.Activo && !d.Eliminado)
                 .Sum(d => d.SaldoPendiente),
+
 
                 DiasAtraso = c.Deuda
                 .Where(d => d.Activo && !d.Eliminado)
