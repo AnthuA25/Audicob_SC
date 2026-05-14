@@ -70,6 +70,7 @@ public class ImportacionesController : ControllerBase
 
         var carpetaUploads = Path.Combine(
             _environment.ContentRootPath,
+            "wwwroot",
             "Uploads",
             "importaciones"
         );
@@ -232,23 +233,19 @@ public class ImportacionesController : ControllerBase
                 !i.Eliminado);
 
         if (importacion == null)
-            return NotFound(new { message = "Importación no encontrada." });
+            return NotFound(new { message = "Importación no encontrada en la base de datos." });
 
         if (string.IsNullOrWhiteSpace(importacion.RutaArchivo))
-            return NotFound(new { message = "La importación no tiene archivo asociado." });
+            return NotFound(new { message = "La importación no tiene ruta de archivo guardada." });
 
-        var rutaArchivo = importacion.RutaArchivo;
-
-        if (!System.IO.File.Exists(rutaArchivo))
-        {
+        if (!System.IO.File.Exists(importacion.RutaArchivo))
             return NotFound(new
             {
-                message = "El archivo no existe en el servidor.",
-                ruta = rutaArchivo
+                message = "El archivo ya no existe físicamente en el servidor. Debes volver a subirlo.",
+                ruta = importacion.RutaArchivo
             });
-        }
 
-        var bytes = await System.IO.File.ReadAllBytesAsync(rutaArchivo);
+        var bytes = await System.IO.File.ReadAllBytesAsync(importacion.RutaArchivo);
 
         return File(
             bytes,
@@ -256,5 +253,4 @@ public class ImportacionesController : ControllerBase
             importacion.NombreArchivo
         );
     }
-
 }
