@@ -13,5 +13,6 @@ export const ROUTES = {
 
   MIS_CLIENTES: "/mis-clientes",
   MIS_CLIENTES_DETALLE: "/mis-clientes/:id",
+  MI_CLIENTE_DETALLE: "/mis-clientes/:id",
   PAGOS: "/pagos",
 };
