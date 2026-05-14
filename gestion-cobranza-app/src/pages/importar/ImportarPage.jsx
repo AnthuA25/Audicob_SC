@@ -1,24 +1,82 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Upload, FileSpreadsheet, Download } from "lucide-react";
+import {
+  descargarPlantillaApi,
+  subirArchivoImportacionApi,
+  getImportacionesRecientesApi,
+  descargarImportacionApi,
+} from "../../api/importacionesApi";
 import "../../../src/styles/importar.css";
-
-const importacionesRecientes = [
-  {
-    id: 1,
-    nombre: "clientes_marzo_2026.xlsx",
-    fecha: "2026-03-18",
-    registros: 25,
-  },
-  { id: 2, nombre: "nuevos_clientes.xlsx", fecha: "2026-03-10", registros: 12 },
-];
 
 const ImportarPage = () => {
   const [archivoSeleccionado, setArchivoSeleccionado] = useState(null);
   const [dragActivo, setDragActivo] = useState(false);
+  const [importacionesRecientes, setImportacionesRecientes] = useState([]);
+  const [toast, setToast] = useState("");
   const inputRef = useRef();
 
-  const handleArchivo = (file) => {
-    if (file) setArchivoSeleccionado(file);
+  const mostrarToast = (mensaje) => {
+    setToast(mensaje);
+    setTimeout(() => setToast(""), 3000);
+  };
+
+  const cargarImportacionesRecientes = async () => {
+    try {
+      const data = await getImportacionesRecientesApi();
+      setImportacionesRecientes(data);
+    } catch (error) {
+      console.error("Error al cargar importaciones recientes:", error);
+      mostrarToast("No se pudieron cargar las importaciones recientes.");
+    }
+  };
+
+  useEffect(() => {
+    let activo = true;
+
+    const cargar = async () => {
+      try {
+        const data = await getImportacionesRecientesApi();
+
+        if (activo) {
+          setImportacionesRecientes(data);
+        }
+      } catch (error) {
+        console.error("Error al cargar importaciones recientes:", error);
+        mostrarToast("No se pudieron cargar las importaciones recientes.");
+      }
+    };
+
+    cargar();
+
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  const handleArchivo = async (file) => {
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith(".xlsx")) {
+      mostrarToast("Tu backend solo permite archivos .xlsx");
+      return;
+    }
+
+    setArchivoSeleccionado(file);
+
+    try {
+      const respuesta = await subirArchivoImportacionApi(file);
+      mostrarToast(respuesta.message || "Archivo importado correctamente.");
+      setArchivoSeleccionado(null);
+
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+
+      await cargarImportacionesRecientes();
+    } catch (error) {
+      console.error("Error al subir archivo:", error);
+      mostrarToast(error.response?.data?.message || "Error al subir archivo.");
+    }
   };
 
   const handleDrop = (e) => {
@@ -26,6 +84,26 @@ const ImportarPage = () => {
     setDragActivo(false);
     const file = e.dataTransfer.files[0];
     handleArchivo(file);
+  };
+
+  const handleDescargarPlantilla = async () => {
+    try {
+      await descargarPlantillaApi();
+      mostrarToast("Plantilla descargada correctamente.");
+    } catch (error) {
+      console.error("Error al descargar plantilla:", error);
+      mostrarToast("No se pudo descargar la plantilla.");
+    }
+  };
+
+  const handleDescargarImportacion = async (imp) => {
+    try {
+      await descargarImportacionApi(imp.idImportacion, imp.nombreArchivo);
+      mostrarToast("Excel descargado correctamente.");
+    } catch (error) {
+      console.error("Error al descargar importación:", error);
+      mostrarToast(error.message || "No se pudo descargar el Excel.");
+    }
   };
 
   return (
@@ -80,7 +158,7 @@ const ImportarPage = () => {
               <span>Plantilla Excel con formato validado</span>
             </div>
           </div>
-          <button className="btn-descargar">
+          <button className="btn-descargar" onClick={handleDescargarPlantilla}>
             <Download size={16} /> Descargar Plantilla
           </button>
         </div>
@@ -131,25 +209,34 @@ const ImportarPage = () => {
         <h2>Importaciones Recientes</h2>
         <div className="importaciones-list">
           {importacionesRecientes.map((imp) => (
-            <div className="importacion-item" key={imp.id}>
+            <div className="importacion-item" key={imp.idImportacion}>
               <div className="importacion-info">
                 <div className="importacion-icon">
                   <FileSpreadsheet size={18} color="#3b82f6" />
                 </div>
                 <div className="importacion-texto">
-                  <strong>{imp.nombre}</strong>
+                  <strong>{imp.nombreArchivo}</strong>
                   <span>
-                    {imp.fecha} • {imp.registros} registros
+                    {new Date(imp.fechaRegistro).toLocaleDateString()} •{" "}
+                    {imp.totalRegistros} registros
                   </span>
                 </div>
               </div>
-              <button className="btn-reimportar">
+              <button
+                className="btn-reimportar"
+                onClick={() => handleDescargarImportacion(imp)}
+              >
                 <Download size={16} />
               </button>
             </div>
           ))}
         </div>
       </div>
+      {toast && (
+        <div className="toast">
+          <span className="toast-icon">✓</span> {toast}
+        </div>
+      )}
     </div>
   );
 };
