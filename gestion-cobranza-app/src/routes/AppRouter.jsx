@@ -10,6 +10,7 @@ import MisClientesPage from "../pages/clientes/MisClientesPage";
 import MiClienteDetallePage from "../pages/clientes/MiClienteDetallePage";
 import MorosidadPage from "../pages/morosidad/MorosidadPage";
 import ImportarPage from "../pages/importar/ImportarPage";
+import PagosPage from "../pages/pagos/PagosPage";
 import useAuth from "../hooks/useAuth";
 import { ROUTES } from "../constants/routes";
 
@@ -104,6 +105,15 @@ const AppRouter = () => {
             element={
               <ProtectedRoute allowedRoles={["Administrador"]}>
                 <ImportarPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path={ROUTES.PAGOS}
+            element={
+              <ProtectedRoute allowedRoles={["Asesor"]}>
+                <PagosPage />
               </ProtectedRoute>
             }
           />
