@@ -50,7 +50,13 @@ public class ClientesController : ControllerBase
                     ? c.Deuda
                         .Where(d => d.Activo && !d.Eliminado)
                         .Max(d => d.DiasAtraso)
-                    : 0
+                    : 0,
+                FechaUltimoPago = c.Deuda
+                .SelectMany(d => d.Pagos)
+                .Where(p => p.Activo && !p.Eliminado)
+                .OrderByDescending(p => p.FechaPago)
+                .Select(p => p.FechaPago)
+                .FirstOrDefault()
             })
             .ToListAsync();
 
