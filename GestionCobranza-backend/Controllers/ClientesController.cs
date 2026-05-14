@@ -24,6 +24,7 @@ public class ClientesController : ControllerBase
     {
         var clientes = await _context.Clientes
             .Include(c => c.IdAsesorNavigation)
+            .Include(c => c.Deuda)
             .Where(c => c.Activo && !c.Eliminado)
             .Select(c => new
             {
@@ -38,7 +39,18 @@ public class ClientesController : ControllerBase
                 c.Riesgo,
                 Asesor = c.IdAsesorNavigation != null
                     ? c.IdAsesorNavigation.Nombres + " " + c.IdAsesorNavigation.Apellidos
-                    : null
+                    : null,
+                DeudaPendiente = c.Deuda
+                .Where(d => d.Activo && !d.Eliminado)
+                .Sum(d => d.SaldoPendiente),
+
+                DiasAtraso = c.Deuda
+                .Where(d => d.Activo && !d.Eliminado)
+                .Any()
+                    ? c.Deuda
+                        .Where(d => d.Activo && !d.Eliminado)
+                        .Max(d => d.DiasAtraso)
+                    : 0
             })
             .ToListAsync();
 
