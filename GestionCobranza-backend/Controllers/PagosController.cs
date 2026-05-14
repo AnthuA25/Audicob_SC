@@ -90,59 +90,63 @@ public class PagosController : ControllerBase
     }
 
     [HttpPost("registrar")]
-    [AllowAnonymous]
+    [Authorize(Roles = "Asesor")]
     public async Task<IActionResult> RegistrarPago([FromBody] RegistrarPagoDto dto)
     {
         if (!ModelState.IsValid)
-        {
             return BadRequest(ModelState);
-        }
+
+        var idUsuarioClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrWhiteSpace(idUsuarioClaim) || !int.TryParse(idUsuarioClaim, out var idAsesor))
+            return Unauthorized(new { mensaje = "No se pudo identificar al asesor autenticado." });
 
         using var transaction = await _context.Database.BeginTransactionAsync();
 
         try
         {
-            // 1. Validar la existencia de la deuda activa
             var deudum = await _context.Deuda
                 .Include(d => d.IdClienteNavigation)
-                .FirstOrDefaultAsync(d => d.IdDeuda == dto.IdDeuda && !d.Eliminado);
+                .FirstOrDefaultAsync(d =>
+                    d.IdDeuda == dto.IdDeuda &&
+                    !d.Eliminado &&
+                    d.Activo);
 
             if (deudum == null)
-            {
                 return NotFound(new { mensaje = "La deuda especificada no existe o fue eliminada." });
-            }
+
+            if (deudum.IdClienteNavigation.IdAsesor != idAsesor)
+                return Forbid();
+
+            if (dto.MontoPagado <= 0)
+                return BadRequest(new { mensaje = "El monto pagado debe ser mayor a 0." });
 
             if (dto.MontoPagado > deudum.SaldoPendiente)
-            {
-                return BadRequest(new { mensaje = $"El monto no puede superar el saldo pendiente actual (S/. {deudum.SaldoPendiente})" });
-            }
+                return BadRequest(new { mensaje = $"El monto no puede superar el saldo pendiente actual (S/. {deudum.SaldoPendiente})." });
 
-            // Usamos DateTime.Now para que sea compatible con 'timestamp without time zone'
-            DateTime fechaActualParaBd = DateTime.Now;
+            var fechaActualParaBd = DateTime.Now;
 
-            // 2. Crear la entidad de Pago usando campos 100% reales de tu DB
-            var nuevoPago = new Models.Pago
+            var nuevoPago = new Pago
             {
                 IdDeuda = deudum.IdDeuda,
                 Monto = dto.MontoPagado,
                 FechaPago = DateOnly.FromDateTime(DateTime.Today),
-                MetodoPago = dto.MetodoPago.ToUpper(),
+                MetodoPago = dto.MetodoPago.Trim().ToUpper(),
                 ComprobanteUrl = dto.NroOperacion,
                 Nota = dto.Observacion,
                 EstadoPago = "CONFIRMADO",
                 FechaRegistro = fechaActualParaBd,
-                UsuarioRegistro = "ASESOR_LOGUEADO",
+                UsuarioRegistro = $"ASESOR_{idAsesor}",
                 Activo = true,
                 Eliminado = false
             };
 
             _context.Pagos.Add(nuevoPago);
 
-            // 3. Actualizar la Deuda (Recálculo)
             deudum.MontoPagado += dto.MontoPagado;
             deudum.SaldoPendiente -= dto.MontoPagado;
             deudum.FechaModificacion = fechaActualParaBd;
-            deudum.UsuarioModificacion = "ASESOR_LOGUEADO";
+            deudum.UsuarioModificacion = $"ASESOR_{idAsesor}";
 
             if (deudum.SaldoPendiente == 0)
             {
@@ -150,31 +154,47 @@ public class PagosController : ControllerBase
                 deudum.DiasAtraso = 0;
             }
 
-            // 4. Verificar estado del Cliente asociado
             var cliente = deudum.IdClienteNavigation;
-            if (cliente != null)
-            {
-                var tieneOtrasDeudasMorosas = await _context.Deuda
-                    .AnyAsync(d => d.IdCliente == cliente.IdCliente && d.IdDeuda != deudum.IdDeuda && d.SaldoPendiente > 0 && d.DiasAtraso > 0 && !d.Eliminado);
 
-                if (!tieneOtrasDeudasMorosas && deudum.SaldoPendiente == 0)
-                {
-                    cliente.EstadoCliente = "AL DIA";
-                    cliente.Riesgo = "BAJO";
-                    cliente.FechaModificacion = fechaActualParaBd;
-                    cliente.UsuarioModificacion = "ASESOR_LOGUEADO";
-                }
+            var tieneOtrasDeudasMorosas = await _context.Deuda
+                .AnyAsync(d =>
+                    d.IdCliente == cliente.IdCliente &&
+                    d.IdDeuda != deudum.IdDeuda &&
+                    d.SaldoPendiente > 0 &&
+                    d.DiasAtraso > 0 &&
+                    d.Activo &&
+                    !d.Eliminado);
+
+            if (!tieneOtrasDeudasMorosas && deudum.SaldoPendiente == 0)
+            {
+                cliente.EstadoCliente = "AL DIA";
+                cliente.Riesgo = "BAJO";
+                cliente.FechaModificacion = fechaActualParaBd;
+                cliente.UsuarioModificacion = $"ASESOR_{idAsesor}";
             }
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            return StatusCode(201, new { mensaje = "Pago registrado exitosamente.", idPago = nuevoPago.IdPago });
+            return StatusCode(201, new
+            {
+                mensaje = "Pago registrado exitosamente.",
+                idPago = nuevoPago.IdPago,
+                idDeuda = nuevoPago.IdDeuda,
+                monto = nuevoPago.Monto,
+                saldoPendiente = deudum.SaldoPendiente
+            });
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            return StatusCode(500, new { mensaje = "Error interno al procesar el pago.", detalle = ex.Message, interno = ex.InnerException?.Message });
+
+            return StatusCode(500, new
+            {
+                mensaje = "Error interno al procesar el pago.",
+                detalle = ex.Message,
+                interno = ex.InnerException?.Message
+            });
         }
     }
 }

@@ -10,4 +10,8 @@ public class CreateClienteDto
     public string? Telefono { get; set; }
     public string? Direccion { get; set; }
     public string? Observacion { get; set; }
+    public decimal? MontoDeuda { get; set; }
+    public DateOnly? FechaEmision { get; set; }
+    public DateOnly? FechaVencimiento { get; set; }
+    public string? DescripcionDeuda { get; set; }
 }

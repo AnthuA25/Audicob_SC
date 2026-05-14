@@ -3,7 +3,6 @@ using GestionCobranza_backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace GestionCobranza_backend.Controllers;
 
@@ -110,32 +109,118 @@ public class ClientesController : ControllerBase
                 return BadRequest(new { message = "El asesor asignado no existe o no tiene rol Asesor." });
         }
 
-        var cliente = new Cliente
-        {
-            IdAsesor = dto.IdAsesor,
-            Nombres = dto.Nombres.Trim(),
-            Apellidos = dto.Apellidos.Trim(),
-            Dni = dto.Dni.Trim(),
-            Correo = dto.Correo?.Trim().ToLower(),
-            Telefono = dto.Telefono?.Trim(),
-            Direccion = dto.Direccion?.Trim(),
-            EstadoCliente = "NUEVO",
-            Riesgo = "BAJO",
-            Observacion = dto.Observacion?.Trim(),
-            FechaRegistro = DateTime.Now,
-            UsuarioRegistro = User.Identity?.Name ?? "system",
-            Activo = true,
-            Eliminado = false
-        };
+        if (dto.MontoDeuda.HasValue && dto.MontoDeuda.Value <= 0)
+            return BadRequest(new { message = "El monto de deuda debe ser mayor a 0." });
 
-        _context.Clientes.Add(cliente);
-        await _context.SaveChangesAsync();
-
-        return Ok(new
+        if (dto.FechaVencimiento.HasValue && dto.FechaEmision.HasValue &&
+            dto.FechaVencimiento.Value < dto.FechaEmision.Value)
         {
-            message = "Cliente registrado correctamente.",
-            cliente
-        });
+            return BadRequest(new { message = "La fecha de vencimiento no puede ser menor a la fecha de emisión." });
+        }
+
+        using var transaction = await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            var fechaActual = DateTime.Now;
+
+            var cliente = new Cliente
+            {
+                IdAsesor = dto.IdAsesor,
+                Nombres = dto.Nombres.Trim(),
+                Apellidos = dto.Apellidos.Trim(),
+                Dni = dto.Dni.Trim(),
+                Correo = dto.Correo?.Trim().ToLower(),
+                Telefono = dto.Telefono?.Trim(),
+                Direccion = dto.Direccion?.Trim(),
+                EstadoCliente = "NUEVO",
+                Riesgo = "BAJO",
+                Observacion = dto.Observacion?.Trim(),
+                FechaRegistro = fechaActual,
+                UsuarioRegistro = User.Identity?.Name ?? "system",
+                Activo = true,
+                Eliminado = false
+            };
+
+            _context.Clientes.Add(cliente);
+            await _context.SaveChangesAsync();
+
+            Deudum? deuda = null;
+
+            if (dto.MontoDeuda.HasValue)
+            {
+                var fechaEmision = dto.FechaEmision ?? DateOnly.FromDateTime(DateTime.Today);
+                var fechaVencimiento = dto.FechaVencimiento ?? fechaEmision.AddDays(30);
+
+                var hoy = DateOnly.FromDateTime(DateTime.Today);
+                var diasAtraso = hoy > fechaVencimiento
+                    ? hoy.DayNumber - fechaVencimiento.DayNumber
+                    : 0;
+
+                deuda = new Deudum
+                {
+                    IdCliente = cliente.IdCliente,
+                    MontoTotal = dto.MontoDeuda.Value,
+                    MontoPagado = 0,
+                    SaldoPendiente = dto.MontoDeuda.Value,
+                    FechaEmision = fechaEmision,
+                    FechaVencimiento = fechaVencimiento,
+                    DiasAtraso = diasAtraso,
+                    EstadoDeuda = diasAtraso > 0 ? "VENCIDA" : "PENDIENTE",
+                    Descripcion = dto.DescripcionDeuda?.Trim(),
+                    FechaRegistro = fechaActual,
+                    UsuarioRegistro = User.Identity?.Name ?? "system",
+                    Activo = true,
+                    Eliminado = false
+                };
+
+                _context.Deuda.Add(deuda);
+                await _context.SaveChangesAsync();
+            }
+
+            await transaction.CommitAsync();
+
+            return Ok(new
+            {
+                message = deuda == null
+                    ? "Cliente registrado correctamente."
+                    : "Cliente y deuda registrados correctamente.",
+                cliente = new
+                {
+                    cliente.IdCliente,
+                    cliente.Nombres,
+                    cliente.Apellidos,
+                    cliente.Dni,
+                    cliente.Correo,
+                    cliente.Telefono,
+                    cliente.Direccion,
+                    cliente.EstadoCliente,
+                    cliente.Riesgo
+                },
+                deuda = deuda == null ? null : new
+                {
+                    deuda.IdDeuda,
+                    deuda.MontoTotal,
+                    deuda.MontoPagado,
+                    deuda.SaldoPendiente,
+                    deuda.FechaEmision,
+                    deuda.FechaVencimiento,
+                    deuda.DiasAtraso,
+                    deuda.EstadoDeuda
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+
+            return StatusCode(500, new
+            {
+                message = "Error al registrar cliente.",
+                detalle = ex.Message,
+                interno = ex.InnerException?.Message
+            });
+        }
     }
 
     [HttpPut("{id}")]
@@ -261,29 +346,38 @@ public class ClientesController : ControllerBase
         return Ok(clientes);
     }
     [HttpGet("mis-clientes/{id}")]
-    [Authorize(Roles = "Asesor,Administrador")]
-    public async Task<IActionResult> ObtenerMiClientePorId(int idCliente)
+    [Authorize(Roles = "Asesor")]
+    public async Task<IActionResult> ObtenerMiClienteDetalle(int id)
     {
-        var idUsuarioClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var idUsuarioClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-        if (string.IsNullOrWhiteSpace(idUsuarioClaim) || !int.TryParse(idUsuarioClaim, out var idUsuario))
-            return Unauthorized(new { message = "No se pudo identificar al usuario autenticado." });
-
-        var rol = User.FindFirst(ClaimTypes.Role)?.Value;
+        if (string.IsNullOrWhiteSpace(idUsuarioClaim) || !int.TryParse(idUsuarioClaim, out var idAsesor))
+        {
+            return Unauthorized(new
+            {
+                message = "No se pudo identificar al asesor autenticado."
+            });
+        }
 
         var cliente = await _context.Clientes
             .Include(c => c.IdAsesorNavigation)
             .Include(c => c.Deuda)
                 .ThenInclude(d => d.Pagos)
             .Include(c => c.GestionCobranzas)
-            .Where(c => c.IdCliente == idCliente && c.Activo && !c.Eliminado)
-            .FirstOrDefaultAsync();
+                .ThenInclude(g => g.IdUsuarioNavigation)
+            .FirstOrDefaultAsync(c =>
+                c.IdCliente == id &&
+                c.Activo &&
+                !c.Eliminado &&
+                c.IdAsesor == idAsesor);
 
         if (cliente == null)
-            return NotFound(new { message = "Cliente no encontrado." });
-
-        if (rol == "Asesor" && cliente.IdAsesor != idUsuario)
-            return Forbid();
+        {
+            return NotFound(new
+            {
+                message = "Cliente no encontrado o no pertenece al asesor."
+            });
+        }
 
         var deudasActivas = cliente.Deuda
             .Where(d => d.Activo && !d.Eliminado)
@@ -291,7 +385,27 @@ public class ClientesController : ControllerBase
 
         var deudaTotal = deudasActivas.Sum(d => d.MontoTotal);
         var deudaPendiente = deudasActivas.Sum(d => d.SaldoPendiente);
-        var diasAtraso = deudasActivas.Any() ? deudasActivas.Max(d => d.DiasAtraso) : 0;
+        var montoPagado = deudasActivas.Sum(d => d.MontoPagado);
+
+        var diasAtraso = deudasActivas.Any()
+            ? deudasActivas.Max(d => d.DiasAtraso)
+            : 0;
+
+        var deudas = deudasActivas
+         .OrderByDescending(d => d.FechaVencimiento)
+         .Select(d => new
+         {
+             idDeuda = d.IdDeuda,
+             montoTotal = d.MontoTotal,
+             montoPagado = d.MontoPagado,
+             saldoPendiente = d.SaldoPendiente,
+             fechaEmision = d.FechaEmision.ToString("dd MMM yyyy"),
+             fechaVencimiento = d.FechaVencimiento.ToString("dd MMM yyyy"),
+             diasAtraso = d.DiasAtraso,
+             estadoDeuda = d.EstadoDeuda,
+             descripcion = d.Descripcion
+         })
+         .ToList();
 
         var bitacora = cliente.GestionCobranzas
             .Where(g => g.Activo && !g.Eliminado)
@@ -299,78 +413,118 @@ public class ClientesController : ControllerBase
             .Select(g => new
             {
                 idGestion = g.IdGestion,
+                tipoGestion = g.TipoGestion,
                 titulo = g.TipoGestion,
                 descripcion = g.Descripcion,
                 resultado = g.Resultado,
-                fecha = g.FechaGestion.ToString("dd MMM yyyy HH:mm"),
-                proximaAccion = g.ProximaAccion
+                fechaGestion = g.FechaGestion,
+                fechaTexto = g.FechaGestion.ToString("dd MMM yyyy HH:mm"),
+                proximaAccion = g.ProximaAccion != null
+                    ? g.ProximaAccion.Value.ToString("dd MMM yyyy")
+                    : null,
+                asesor = g.IdUsuarioNavigation != null
+                    ? g.IdUsuarioNavigation.Nombres + " " + g.IdUsuarioNavigation.Apellidos
+                    : "-"
             })
             .ToList();
 
         var historialPagos = deudasActivas
             .SelectMany(d => d.Pagos)
-            .Where(p => p.Activo && !p.Eliminado && p.EstadoPago == "CONFIRMADO")
+            .Where(p => p.Activo && !p.Eliminado)
             .OrderByDescending(p => p.FechaPago)
             .Select(p => new
             {
                 idPago = p.IdPago,
+                idDeuda = p.IdDeuda,
                 monto = p.Monto,
                 fechaPago = p.FechaPago,
+                fechaTexto = p.FechaPago.ToString("dd MMM yyyy"),
                 metodoPago = p.MetodoPago,
+                comprobanteUrl = p.ComprobanteUrl,
                 nota = p.Nota,
                 estadoPago = p.EstadoPago
             })
             .ToList();
 
-        var timelineGestiones = bitacora.Select(g => new
-        {
-            tipo = "GESTION",
-            titulo = g.titulo,
-            descripcion = g.descripcion,
-            fecha = g.fecha
-        });
+        var timelineGestiones = cliente.GestionCobranzas
+            .Where(g => g.Activo && !g.Eliminado)
+            .Select(g => new
+            {
+                tipo = "GESTION",
+                titulo = g.TipoGestion,
+                descripcion = g.Descripcion,
+                fechaOrden = g.FechaGestion,
+                fecha = g.FechaGestion.ToString("dd MMM yyyy HH:mm")
+            })
+            .ToList();
 
-        var timelinePagos = historialPagos.Select(p => new
-        {
-            tipo = "PAGO",
-            titulo = "Pago Recibido",
-            descripcion = $"Pago de S/ {p.monto} vía {p.metodoPago}",
-            fecha = p.fechaPago.ToString("dd MMM yyyy")
-        });
+        var timelinePagos = deudasActivas
+            .SelectMany(d => d.Pagos)
+            .Where(p => p.Activo && !p.Eliminado)
+            .Select(p => new
+            {
+                tipo = "PAGO",
+                titulo = "Pago registrado",
+                descripcion = $"Pago de S/. {p.Monto} por {p.MetodoPago}",
+                fechaOrden = p.FechaPago.ToDateTime(TimeOnly.MinValue),
+                fecha = p.FechaPago.ToString("dd MMM yyyy")
+            })
+            .ToList();
 
         var timeline = timelineGestiones
             .Concat(timelinePagos)
-            .OrderByDescending(t => t.fecha)
+            .OrderByDescending(t => t.fechaOrden)
+            .Select(t => new
+            {
+                t.tipo,
+                t.titulo,
+                t.descripcion,
+                t.fecha
+            })
             .ToList();
+
+        var ultimoContacto = cliente.GestionCobranzas
+            .Where(g => g.Activo && !g.Eliminado)
+            .OrderByDescending(g => g.FechaGestion)
+            .Select(g => g.FechaGestion.ToString("dd MMM yyyy"))
+            .FirstOrDefault();
+
+        var proximoSeguimiento = cliente.GestionCobranzas
+            .Where(g => g.Activo && !g.Eliminado && g.ProximaAccion != null)
+            .OrderBy(g => g.ProximaAccion)
+            .Select(g => g.ProximaAccion!.Value.ToString("dd MMM yyyy"))
+            .FirstOrDefault();
 
         return Ok(new
         {
             idCliente = cliente.IdCliente,
             nombreCompleto = cliente.Nombres + " " + cliente.Apellidos,
+            dni = cliente.Dni,
             correo = cliente.Correo,
             telefono = cliente.Telefono,
+            direccion = cliente.Direccion,
             fechaRegistro = cliente.FechaRegistro.ToString("dd MMM yyyy"),
+
             asesorActual = cliente.IdAsesorNavigation != null
                 ? cliente.IdAsesorNavigation.Nombres + " " + cliente.IdAsesorNavigation.Apellidos
-                : null,
+                : "-",
+
+            estadoActual = cliente.EstadoCliente,
+            riesgo = cliente.Riesgo,
+            observacion = cliente.Observacion,
+
             deudaTotal = deudaTotal,
             deudaPendiente = deudaPendiente,
+            montoPagado = montoPagado,
             diasAtraso = diasAtraso,
-            scoreRiesgo = cliente.Riesgo,
-            estadoActual = cliente.EstadoCliente,
-            ultimoContacto = cliente.GestionCobranzas
-                .Where(g => g.Activo && !g.Eliminado)
-                .OrderByDescending(g => g.FechaGestion)
-                .Select(g => g.FechaGestion.ToString("dd MMM yyyy"))
-                .FirstOrDefault(),
-            proximoSeguimiento = cliente.GestionCobranzas
-                .Where(g => g.Activo && !g.Eliminado && g.ProximaAccion != null)
-                .OrderByDescending(g => g.ProximaAccion)
-                .Select(g => g.ProximaAccion)
-                .FirstOrDefault(),
-            bitacora,
-            historialPagos,
-            timeline
+
+            ultimoContacto = ultimoContacto,
+            proximoSeguimiento = proximoSeguimiento,
+
+            deudas = deudas,
+            bitacora = bitacora,
+            historialPagos = historialPagos,
+            timeline = timeline
         });
     }
 }
