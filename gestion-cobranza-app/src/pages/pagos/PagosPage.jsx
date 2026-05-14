@@ -106,7 +106,147 @@ const PagosPage = () => {
           </div>
         </div>
       </div>
-
+      <div
+        style={{
+          background: "#fff",
+          border: "1px solid #e2e8f0",
+          borderRadius: "12px",
+          padding: "1.25rem",
+          marginTop: "1.5rem",
+        }}
+      >
+        <p
+          style={{
+            fontSize: "14px",
+            fontWeight: "600",
+            color: "black",
+            marginBottom: "1rem",
+          }}
+        >
+          Historial de Pagos
+        </p>
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            fontSize: "13px",
+          }}
+        >
+          <thead>
+            <tr>
+              {["Fecha", "Cliente", "Monto", "Método", "Notas", "Estado"].map(
+                (h) => (
+                  <th
+                    key={h}
+                    style={{
+                      textAlign: "left",
+                      padding: "10px 12px",
+                      color: "black",
+                      fontWeight: "500",
+                      borderBottom: "1px solid #e2e8f0",
+                    }}
+                  >
+                    {h}
+                  </th>
+                ),
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              {
+                fecha: "09 mar 2026",
+                cliente: "Miguel Torres",
+                monto: "S/. 3500",
+                metodo: "Transferencia",
+                notas: "Pago Total",
+              },
+              {
+                fecha: "04 mar 2026",
+                cliente: "Miguel Torres",
+                monto: "S/. 3500",
+                metodo: "Efectivo",
+                notas: "Primera cuota",
+              },
+              {
+                fecha: "09 feb 2026",
+                cliente: "Juan Pérez",
+                monto: "S/. 3500",
+                metodo: "Transferencia",
+                notas: "Pago parcial acordado",
+              },
+            ].map((p, i) => (
+              <tr key={i}>
+                <td
+                  style={{
+                    padding: "14px 12px",
+                    borderBottom: "1px solid #f1f5f9",
+                    color: "black",
+                  }}
+                >
+                  {p.fecha}
+                </td>
+                <td
+                  style={{
+                    padding: "14px 12px",
+                    borderBottom: "1px solid #f1f5f9",
+                    color: "black",
+                  }}
+                >
+                  {p.cliente}
+                </td>
+                <td
+                  style={{
+                    padding: "14px 12px",
+                    borderBottom: "1px solid #f1f5f9",
+                    color: "#22c55e",
+                    fontWeight: "500",
+                  }}
+                >
+                  {p.monto}
+                </td>
+                <td
+                  style={{
+                    padding: "14px 12px",
+                    borderBottom: "1px solid #f1f5f9",
+                    color: "black",
+                  }}
+                >
+                  {p.metodo}
+                </td>
+                <td
+                  style={{
+                    padding: "14px 12px",
+                    borderBottom: "1px solid #f1f5f9",
+                    color: "black",
+                  }}
+                >
+                  {p.notas}
+                </td>
+                <td
+                  style={{
+                    padding: "14px 12px",
+                    borderBottom: "1px solid #f1f5f9",
+                    color: "black",
+                  }}
+                >
+                  <span
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      color: "#22c55e",
+                      fontSize: "12px",
+                    }}
+                  >
+                    <CheckCircle size={14} /> Confirmado
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       {modalAbierto && (
         <div
           className="modal-pago-overlay"
