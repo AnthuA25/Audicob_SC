@@ -18,7 +18,7 @@ const MisClientesPage = () => {
       (c) =>
         c.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
         c.email.toLowerCase().includes(busqueda.toLowerCase()) ||
-        c.dni.toLowerCase().includes(busqueda.toLowerCase())
+        c.dni.toLowerCase().includes(busqueda.toLowerCase()),
     );
   }, [clientes, busqueda]);
 
@@ -35,8 +35,7 @@ const MisClientesPage = () => {
     <div>
       <div className="clientes-header">
         <div className="clientes-header-info">
-          <h1>Mis Clientes</h1>
-          <p>Visualiza los clientes asignados a tu cartera</p>
+          <h1>Gestion de Clientes</h1>
         </div>
       </div>
 
@@ -81,7 +80,9 @@ const MisClientesPage = () => {
                 <td>{cliente.deudaPendiente || "-"}</td>
                 <td>
                   <span className={getDiasClass(cliente.diasAtraso)}>
-                    {cliente.diasAtraso !== "" ? `${cliente.diasAtraso} días` : "-"}
+                    {cliente.diasAtraso !== ""
+                      ? `${cliente.diasAtraso} días`
+                      : "-"}
                   </span>
                 </td>
                 <td>
