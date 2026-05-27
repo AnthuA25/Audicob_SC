@@ -1,8 +1,7 @@
 import { useState, useRef } from "react";
 import { Download, FileText, Calendar } from "lucide-react";
 import "../../styles/reportes.css";
-const fechaDesdeRef = useRef();
-const fechaHastaRef = useRef();
+
 const rendimientoData = [
   {
     asesor: "Carlos Rodríguez",
@@ -68,6 +67,8 @@ const ReportesPage = () => {
   const [tipoReporte, setTipoReporte] = useState("Reporte General");
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
+  const fechaDesdeRef = useRef();
+  const fechaHastaRef = useRef();
 
   return (
     <div>

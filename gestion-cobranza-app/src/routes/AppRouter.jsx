@@ -13,6 +13,7 @@ import ImportarPage from "../pages/importar/ImportarPage";
 import PagosPage from "../pages/pagos/PagosPage";
 import AlertasPage from "../pages/alertas/AlertasPage";
 import ReportesPage from "../pages/reportes/ReportesPage";
+import AlertasAsesorPage from "../pages/alertas/AlertasAsesorPage";
 import useAuth from "../hooks/useAuth";
 import { ROUTES } from "../constants/routes";
 
@@ -28,7 +29,23 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 
   return children;
 };
+const AlertasRouter = () => {
+  const { user } = useAuth();
+  return user?.rol === "Administrador" ? (
+    <AlertasPage />
+  ) : (
+    <AlertasAsesorPage />
+  );
+};
 
+const ReportesRouter = () => {
+  const { user } = useAuth();
+  return user?.rol === "Administrador" ? (
+    <ReportesPage />
+  ) : (
+    <div>Reportes Asesor</div>
+  );
+};
 const AppRouter = () => {
   return (
     <BrowserRouter>
@@ -122,16 +139,16 @@ const AppRouter = () => {
           <Route
             path={ROUTES.ALERTAS}
             element={
-              <ProtectedRoute allowedRoles={["Administrador"]}>
-                <AlertasPage />
+              <ProtectedRoute allowedRoles={["Administrador", "Asesor"]}>
+                <AlertasRouter />
               </ProtectedRoute>
             }
           />
           <Route
             path={ROUTES.REPORTES}
             element={
-              <ProtectedRoute allowedRoles={["Administrador"]}>
-                <ReportesPage />
+              <ProtectedRoute allowedRoles={["Administrador", "Asesor"]}>
+                <ReportesRouter />
               </ProtectedRoute>
             }
           />
