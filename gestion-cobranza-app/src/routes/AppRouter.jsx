@@ -12,6 +12,7 @@ import MorosidadPage from "../pages/morosidad/MorosidadPage";
 import ImportarPage from "../pages/importar/ImportarPage";
 import PagosPage from "../pages/pagos/PagosPage";
 import AlertasPage from "../pages/alertas/AlertasPage";
+import ReportesPage from "../pages/reportes/ReportesPage";
 import useAuth from "../hooks/useAuth";
 import { ROUTES } from "../constants/routes";
 
@@ -123,6 +124,14 @@ const AppRouter = () => {
             element={
               <ProtectedRoute allowedRoles={["Administrador"]}>
                 <AlertasPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path={ROUTES.REPORTES}
+            element={
+              <ProtectedRoute allowedRoles={["Administrador"]}>
+                <ReportesPage />
               </ProtectedRoute>
             }
           />
