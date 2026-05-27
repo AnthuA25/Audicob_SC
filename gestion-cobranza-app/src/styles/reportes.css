@@ -70,7 +70,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #000000;
+  background: #1e3a5f;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -82,7 +82,7 @@
 }
 
 .btn-descargar-excel:hover {
-  background: #000000;
+  background: #2563eb;
 }
 
 .reporte-table {

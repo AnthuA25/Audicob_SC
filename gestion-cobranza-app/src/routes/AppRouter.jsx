@@ -14,6 +14,7 @@ import PagosPage from "../pages/pagos/PagosPage";
 import AlertasPage from "../pages/alertas/AlertasPage";
 import ReportesPage from "../pages/reportes/ReportesPage";
 import AlertasAsesorPage from "../pages/alertas/AlertasAsesorPage";
+import ReportesAsesorPage from "../pages/reportes/ReportesAsesorPage";
 import useAuth from "../hooks/useAuth";
 import { ROUTES } from "../constants/routes";
 
@@ -43,7 +44,7 @@ const ReportesRouter = () => {
   return user?.rol === "Administrador" ? (
     <ReportesPage />
   ) : (
-    <div>Reportes Asesor</div>
+    <ReportesAsesorPage />
   );
 };
 const AppRouter = () => {
