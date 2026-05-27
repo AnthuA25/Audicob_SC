@@ -1,0 +1,197 @@
+.reportes-header {
+  margin-bottom: 1.5rem;
+}
+
+.reportes-header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1e3a5f;
+  margin-bottom: 4px;
+  text-align: left;
+}
+
+.reportes-header p {
+  font-size: 13px;
+  color: #94a3b8;
+  text-align: left;
+}
+
+.reportes-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.reportes-card h2 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e3a5f;
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.reporte-filtros {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.reporte-filtro-field label {
+  display: block;
+  font-size: 12px;
+  color: #000000;
+  margin-bottom: 6px;
+  text-align: left;
+}
+
+.reporte-filtro-field select,
+.reporte-filtro-field input {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #545658;
+  outline: none;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+.reporte-filtro-field select:focus,
+.reporte-filtro-field input:focus {
+  border-color: #3b82f6;
+}
+
+.btn-descargar-excel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #000000;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-descargar-excel:hover {
+  background: #000000;
+}
+
+.reporte-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.reporte-table th {
+  text-align: left;
+  padding: 10px 12px;
+  color: #000000;
+  font-weight: 500;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.reporte-table td {
+  padding: 12px;
+  color: #000000;
+  border-bottom: 1px solid #f1f5f9;
+  text-align: left;
+}
+
+.reporte-table td.verde {
+  color: #22c55e;
+  font-weight: 500;
+}
+
+.reportes-recientes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reporte-reciente-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.reporte-reciente-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reporte-reciente-icon {
+  width: 36px;
+  height: 36px;
+  background: #eff6ff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reporte-reciente-texto strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e3a5f;
+}
+
+.reporte-reciente-texto span {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.btn-descargar-reporte {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #3b82f6;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.btn-descargar-reporte:hover {
+  background: #eff6ff;
+}
+.reporte-filtro-field input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+  width: 18px;
+  height: 18px;
+}
+
+.reporte-filtro-field
+  input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+.reporte-filtro-field input[type="date"] {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #374151;
+  outline: none;
+  box-sizing: border-box;
+  background: #fff;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+}
