@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   AlertCircle,
   AlertTriangle,
@@ -6,55 +5,9 @@ import {
   Calendar,
   FileText,
 } from "lucide-react";
+import { useAlertas } from "../../hooks/useAlertas";
 import "../../styles/alertas.css";
 
-const alertasData = [
-  {
-    id: 1,
-    tipo: "Recordatorio de pago",
-    descripcion: "Carmen López tiene 90 dias de atraso y S/ 22,000 de deuda",
-    prioridad: "media",
-    fecha: "Hoy",
-    leida: false,
-    icono: "calendar",
-  },
-  {
-    id: 2,
-    tipo: "Riesgo de morosidad",
-    descripcion: "Laura Martínez - 12 dias de atraso, requiere seguimiento",
-    prioridad: "alta",
-    fecha: "Hoy",
-    leida: false,
-    icono: "alerta",
-  },
-  {
-    id: 3,
-    tipo: "Acuerdo pendiente",
-    descripcion: "Miguel Torres - Acuerdo de pago sin firma desde hace 5 dias",
-    prioridad: "alta",
-    fecha: "Ayer",
-    leida: true,
-    icono: "file",
-  },
-  {
-    id: 4,
-    tipo: "Recordatorio de pago",
-    descripcion: "Patricia Ramírez - Pago próximo a vencer el 20/03/2026",
-    prioridad: "baja",
-    fecha: "09/03/2026",
-    leida: true,
-    icono: "calendar",
-  },
-  {
-    id: 5,
-    tipo: "Riesgo de morosidad",
-    descripcion: "Sofia Vargas - Cliente con historial de atrasos recurrentes",
-    prioridad: "media",
-    fecha: "08/03/2026",
-    leida: true,
-    icono: "alerta",
-  },
-];
 
 const getIcono = (tipo) => {
   if (tipo === "calendar") return <Calendar size={16} color="#3b82f6" />;
@@ -63,10 +16,17 @@ const getIcono = (tipo) => {
 };
 
 const AlertasPage = () => {
-  const [tabActiva, setTabActiva] = useState("todas");
+  const {
+    resumen,
+    alertas,
+    tabActiva,
+    setTabActiva,
+    marcarComoLeida,
+    loading,
+  } = useAlertas("admin");
 
-  const noLeidas = alertasData.filter((a) => !a.leida);
-  const filtradas = tabActiva === "noLeidas" ? noLeidas : alertasData;
+  const noLeidas = alertas.filter((a) => !a.leida);
+
 
   return (
     <div>
@@ -82,7 +42,7 @@ const AlertasPage = () => {
           </div>
           <div className="alerta-metric-info">
             <p>Riesgo Medio</p>
-            <div className="alerta-metric-valor">15</div>
+            <div className="alerta-metric-valor">{loading ? "..." : resumen.riesgoMedio}</div>
             <div className="alerta-metric-sub">5-15 dias de atraso</div>
           </div>
         </div>
@@ -92,7 +52,7 @@ const AlertasPage = () => {
           </div>
           <div className="alerta-metric-info">
             <p>Riesgo Alto</p>
-            <div className="alerta-metric-valor">18</div>
+            <div className="alerta-metric-valor">{loading ? "..." : resumen.riesgoAlto}</div>
             <div className="alerta-metric-sub">16-30 dias de atraso</div>
           </div>
         </div>
@@ -102,7 +62,7 @@ const AlertasPage = () => {
           </div>
           <div className="alerta-metric-info">
             <p>Crítico</p>
-            <div className="alerta-metric-valor">7</div>
+            <div className="alerta-metric-valor">{loading ? "..." : resumen.critico}</div>
             <div className="alerta-metric-sub">+30 dias de atraso</div>
           </div>
         </div>
@@ -113,19 +73,19 @@ const AlertasPage = () => {
           className={`alerta-tab ${tabActiva === "noLeidas" ? "activo" : ""}`}
           onClick={() => setTabActiva("noLeidas")}
         >
-          No Leídas ({noLeidas.length})
+          No Leídas ({loading ? "..." : noLeidas.length})
         </button>
         <button
           className={`alerta-tab ${tabActiva === "todas" ? "activo" : ""}`}
           onClick={() => setTabActiva("todas")}
         >
-          Todas ({alertasData.length})
+          Todas ({loading ? "..." : alertas.length})
         </button>
       </div>
 
       <div className="alertas-lista">
-        {filtradas.map((alerta) => (
-          <div className="alerta-item" key={alerta.id}>
+        {alertas.map((alerta) => (
+          <div className="alerta-item" key={alerta.id} onClick={() => !alerta.leida && marcarComoLeida(alerta.id)}>
             <div className={`alerta-borde ${alerta.prioridad}`} />
             <div className="alerta-icono">{getIcono(alerta.icono)}</div>
             <div className="alerta-contenido">

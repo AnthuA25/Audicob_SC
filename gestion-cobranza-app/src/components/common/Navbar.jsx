@@ -1,7 +1,8 @@
-import { Search, Bell, ShieldCheck } from "lucide-react";
+import { Search, ShieldCheck } from "lucide-react";
 import useAuth from "../../hooks/useAuth";
+import NotificacionesBell from "../notificaciones/NotificacionesBell";
 
-const Navbar = ({ notificaciones = 3 }) => {
+const Navbar = () => {
   const { user } = useAuth();
 
   const nombreCompleto = user
@@ -21,10 +22,7 @@ const Navbar = ({ notificaciones = 3 }) => {
       </div>
 
       <div className="navbar-actions">
-        <div className="navbar-notif">
-          <Bell size={20} color="#374151" />
-          {notificaciones > 0 && <span className="notif-dot" />}
-        </div>
+        <NotificacionesBell rol={user?.rol} />
         <div className="navbar-user">
           <div className="navbar-user-info">
             <span className="navbar-username">{nombreCompleto}</span>
