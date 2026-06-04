@@ -1,13 +1,14 @@
-using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Threading.Tasks;
 using GestionCobranza_backend.Dtos.Reporte;
 using GestionCobranza_backend.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace GestionCobranza_backend.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/reportes")]
+    [Authorize]
     public class ReportesController : ControllerBase
     {
         private readonly IReporteService _reporteService;
@@ -17,83 +18,73 @@ namespace GestionCobranza_backend.Controllers
             _reporteService = reporteService;
         }
 
-        // GET: api/reportes/gerencial
-        [HttpGet("gerencial")]
-        public async Task<ActionResult<ReporteGerencialDto>> ObtenerReporteGerencial()
+        [HttpGet("admin")]
+        public async Task<ActionResult<ReporteGerencialDto>> ObtenerVistaAdministrador()
         {
-            try
-            {
-                var resultado = await _reporteService.GetDashboardGerencialAsync();
-                return Ok(resultado);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error interno al obtener el reporte gerencial: {ex.Message}");
-            }
+            if (!EsAdministrador())
+                return Forbid();
+
+            var resultado = await _reporteService.GetDashboardGerencialAsync();
+            return Ok(resultado);
         }
 
-        // POST: api/reportes/descargar-excel
-        [HttpPost("descargar-excel")]
-        public async Task<IActionResult> DescargarYRegistrarReporte([FromBody] GenerarReporteRequestDto request)
-        {
-            if (request == null)
-            {
-                return BadRequest("Los parámetros para el reporte no son válidos.");
-            }
-
-            try
-            {
-                int idUsuarioSimulado = 2;
-
-                string urlArchivo = await _reporteService.GenerarYRegistrarReporteAsync(request, idUsuarioSimulado);
-
-                return Created("", new { mensaje = "Reporte registrado con éxito en el historial", url = urlArchivo });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error al procesar el registro de descarga: {ex.Message}");
-            }
-        }
-
-        // GET: api/reportes/asesor
         [HttpGet("asesor")]
-        public async Task<ActionResult<ReporteRendimientoIndividualDto>> ObtenerReporteAsesor()
+        public async Task<ActionResult<ReporteRendimientoIndividualDto>> ObtenerVistaAsesor()
         {
-            try
-            {
-                int idAsesorSimulado = 3;
+            int idAsesor = ObtenerIdUsuario();
 
-                var resultado = await _reporteService.GetDashboardIndividualAsync(idAsesorSimulado);
-                return Ok(resultado); // HTTP 200
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error interno al obtener el rendimiento del asesor: {ex.Message}");
-            }
+            var resultado = await _reporteService.GetDashboardIndividualAsync(idAsesor);
+            return Ok(resultado);
         }
 
-        // POST: api/reportes/asesor/descargar-excel
-        [HttpPost("asesor/descargar-excel")]
-        public async Task<IActionResult> DescargarYRegistrarReporteAsesor([FromBody] GenerarReporteRequestDto request)
+        [HttpPost("admin/generar")]
+        public async Task<ActionResult<ReporteGeneradoResponseDto>> GenerarReporteAdministrador(
+            [FromBody] GenerarReporteRequestDto request)
         {
-            if (request == null)
-            {
-                return BadRequest("Los parámetros para el reporte del asesor no son válidos.");
-            }
+            if (!EsAdministrador())
+                return Forbid();
 
-            try
-            {
-                // ID simulado de Asesor (Marcelo Panduro = ID 3) según tus tablas de PostgreSQL
-                int idAsesorSimulado = 3;
+            int idUsuario = ObtenerIdUsuario();
+            string baseUrl = $"{Request.Scheme}://{Request.Host}";
 
-                string urlArchivo = await _reporteService.GenerarYRegistrarReporteAsesorAsync(request, idAsesorSimulado);
+            var resultado = await _reporteService.GenerarReporteAdminAsync(request, idUsuario, baseUrl);
+            return Ok(resultado);
+        }
 
-                return Created("", new { mensaje = "Reporte de rendimiento individual registrado con éxito", url = urlArchivo });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error al procesar la descarga del asesor: {ex.Message}");
-            }
+        [HttpPost("asesor/generar")]
+        public async Task<ActionResult<ReporteGeneradoResponseDto>> GenerarReporteAsesor(
+            [FromBody] GenerarReporteRequestDto request)
+        {
+            int idAsesor = ObtenerIdUsuario();
+            string baseUrl = $"{Request.Scheme}://{Request.Host}";
+
+            var resultado = await _reporteService.GenerarReporteAsesorAsync(request, idAsesor, baseUrl);
+            return Ok(resultado);
+        }
+
+        private int ObtenerIdUsuario()
+        {
+            var id = User.FindFirst("idUsuario")?.Value
+                     ?? User.FindFirst("IdUsuario")?.Value
+                     ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                     ?? User.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrEmpty(id))
+                throw new Exception("El token no contiene el id del usuario.");
+
+            return int.Parse(id);
+        }
+
+        private bool EsAdministrador()
+        {
+            var rol = User.FindFirst(ClaimTypes.Role)?.Value
+                      ?? User.FindFirst("rol")?.Value
+                      ?? User.FindFirst("role")?.Value
+                      ?? "";
+
+            return rol.ToUpper() == "ADMIN"
+                || rol.ToUpper() == "ADMINISTRADOR"
+                || rol == "1";
         }
     }
 }

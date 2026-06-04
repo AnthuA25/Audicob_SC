@@ -6,8 +6,9 @@ namespace GestionCobranza_backend.Services
     public interface IReporteService
     {
         Task<ReporteGerencialDto> GetDashboardGerencialAsync();
-        Task<string> GenerarYRegistrarReporteAsync(GenerarReporteRequestDto request, int idUsuario);
         Task<ReporteRendimientoIndividualDto> GetDashboardIndividualAsync(int idAsesor);
-        Task<string> GenerarYRegistrarReporteAsesorAsync(GenerarReporteRequestDto request, int idAsesor);
+
+        Task<ReporteGeneradoResponseDto> GenerarReporteAdminAsync(GenerarReporteRequestDto request, int idUsuario, string baseUrl);
+        Task<ReporteGeneradoResponseDto> GenerarReporteAsesorAsync(GenerarReporteRequestDto request, int idAsesor, string baseUrl);
     }
 }
