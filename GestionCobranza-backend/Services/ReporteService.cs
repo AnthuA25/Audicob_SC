@@ -41,10 +41,8 @@ namespace GestionCobranza_backend.Services
 
         public async Task<string> GenerarYRegistrarReporteAsync(GenerarReporteRequestDto request, int idUsuario)
         {
-            // 1. Definimos la URL de descarga para el archivo Excel
             string urlFicticiaExcel = $"https://storage.audicob.com/reportes/Reporte_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
 
-            // 2. Buscamos el Administrador verídico en la BD
             var adminReal = await _reporteRepository.GetAdministradorDisponibleAsync();
 
             if (adminReal == null)
@@ -52,45 +50,101 @@ namespace GestionCobranza_backend.Services
                 throw new Exception("Error: No se encontró ningún usuario con rol de Administrador (id_rol = 1) activo en la base de datos.");
             }
 
-            // ====================================================================
-            // SOLUCIÓN AL ERROR DE TIMESTAMP:
-            // Creamos la fecha local actual y le removemos explícitamente el Kind UTC
-            // transformándolo en 'Unspecified' para que coincida con 'timestamp without time zone'
-            // ====================================================================
             DateTime fechaSeguraPostgres = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
 
-            // 3. Mapeo seguro con tipos primitivos purificados para tu base de datos
             var nuevoReporte = new ReporteGenerado
             {
                 IdUsuario = adminReal.IdUsuario,
                 NombreReporte = $"{request.TipoReporte}_{DateTime.Now:yyyyMMdd}",
                 TipoReporte = request.TipoReporte,
 
-                // Conversión limpia a DateOnly? compatible con tu Scaffold
                 FechaDesde = request.FechaDesde.HasValue ? DateOnly.FromDateTime(request.FechaDesde.Value) : null,
                 FechaHasta = request.FechaHasta.HasValue ? DateOnly.FromDateTime(request.FechaHasta.Value) : null,
 
                 ArchivoUrl = urlFicticiaExcel,
 
-                // Asignamos las estampas de tiempo compatibles sin zona horaria
                 FechaGeneracion = fechaSeguraPostgres,
                 FechaRegistro = fechaSeguraPostgres,
                 UsuarioRegistro = $"{adminReal.Nombres} {adminReal.Apellidos}",
 
                 Activo = true,
                 Eliminado = false,
-
-                // Anulamos la navegación para evitar bucles de rastreo gráficos de EF Core
                 IdUsuarioNavigation = null!
             };
 
-            // 4. Guardamos los cambios en la base de datos de manera asíncrona
             bool exito = await _reporteRepository.RegistrarReporteGeneradoAsync(nuevoReporte);
 
             if (!exito)
                 throw new Exception("El motor de base de datos rechazó el registro físico del reporte.");
 
             return urlFicticiaExcel;
+        }
+
+        public async Task<ReporteRendimientoIndividualDto> GetDashboardIndividualAsync(int idAsesor)
+        {
+            var resumenCartera = await _reporteRepository.GetRendimientoIndividualAsync(idAsesor);
+            var distribucion = await _reporteRepository.GetResumenClientesPorAsesorAsync(idAsesor);
+
+            int totalClientesAsesor = distribucion.Sum(d => d.Cantidad);
+            if (totalClientesAsesor > 0)
+            {
+                foreach (var item in distribucion)
+                {
+                    item.Porcentaje = Math.Round((double)item.Cantidad / totalClientesAsesor * 100, 1);
+                }
+            }
+
+            return new ReporteRendimientoIndividualDto
+            {
+                ResumenCartera = resumenCartera,
+                DistribucionClientes = distribucion
+            };
+        }
+
+        public async Task<string> GenerarYRegistrarReporteAsesorAsync(GenerarReporteRequestDto request, int idAsesor)
+        {
+            // 1. URL de descarga simulada para el reporte del asesor
+            string urlExcelAsesor = $"https://storage.audicob.com/reportes/Asesor_{idAsesor}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+
+            // 2. CORRECCIÓN: Buscamos al asesor usando el REPOSITORIO, no el contexto directo
+            var asesorReal = await _reporteRepository.GetAsesorPorIdAsync(idAsesor);
+
+            if (asesorReal == null)
+            {
+                throw new Exception($"Error: No se encontró un asesor activo con el ID {idAsesor} en el sistema.");
+            }
+
+            // 3. Formateamos la estampa de tiempo compatible sin Kind UTC
+            DateTime fechaSeguraPostgres = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
+
+            // 4. Mapeo estructural de la entidad reporte_generado
+            var nuevoReporte = new ReporteGenerado
+            {
+                IdUsuario = asesorReal.IdUsuario,
+                NombreReporte = $"Rendimiento_{asesorReal.Apellidos}_{DateTime.Now:yyyyMMdd}",
+                TipoReporte = request.TipoReporte ?? "Rendimiento Individual",
+
+                FechaDesde = request.FechaDesde.HasValue ? DateOnly.FromDateTime(request.FechaDesde.Value) : null,
+                FechaHasta = request.FechaHasta.HasValue ? DateOnly.FromDateTime(request.FechaHasta.Value) : null,
+
+                ArchivoUrl = urlExcelAsesor,
+
+                FechaGeneracion = fechaSeguraPostgres,
+                FechaRegistro = fechaSeguraPostgres,
+                UsuarioRegistro = $"{asesorReal.Nombres} {asesorReal.Apellidos}",
+
+                Activo = true,
+                Eliminado = false,
+                IdUsuarioNavigation = null!
+            };
+
+            // 5. Guardamos en la base de datos a través del repositorio
+            bool exito = await _reporteRepository.RegistrarReporteGeneradoAsync(nuevoReporte);
+
+            if (!exito)
+                throw new Exception("La base de datos rechazó el registro de auditoría de la descarga del asesor.");
+
+            return urlExcelAsesor;
         }
     }
 }

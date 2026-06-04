@@ -19,7 +19,6 @@ namespace GestionCobranza_backend.Repositories
 
         public async Task<List<RendimientoAsesorDto>> GetRendimientoAsesoresAsync()
         {
-            // Agregamos AsNoTracking() para liberar memoria de EF Core de inmediato
             return await _context.Set<Usuario>()
                 .AsNoTracking()
                 .Where(u => u.Activo && !u.Eliminado)
@@ -86,6 +85,52 @@ namespace GestionCobranza_backend.Repositories
             return await _context.Set<Usuario>()
                 .AsNoTracking()
                 .FirstOrDefaultAsync(u => u.Activo && !u.Eliminado && u.IdRol == 1);
+        }
+
+        public async Task<ResumenAsesorDto> GetRendimientoIndividualAsync(int idAsesor)
+        {
+            var totalClientes = await _context.Set<Cliente>()
+                .AsNoTracking()
+                .CountAsync(c => c.IdAsesor == idAsesor && c.Activo && !c.Eliminado);
+
+            var deudasAsesor = await _context.Set<Deudum>()
+                .AsNoTracking()
+                .Where(d => _context.Set<Cliente>().Any(c => c.IdCliente == d.IdCliente && c.IdAsesor == idAsesor && c.Activo && !c.Eliminado))
+                .ToListAsync();
+
+            decimal deudaTotal = deudasAsesor.Sum(d => d.MontoTotal);
+            decimal montoPagado = deudasAsesor.Sum(d => d.MontoPagado);
+
+            double eficienciaCalculada = deudasAsesor.Count > 0 ? (deudasAsesor.Count(d => d.EstadoDeuda == "PAGADO") / (double)deudasAsesor.Count) * 100 : 0.0;
+
+            return new ResumenAsesorDto
+            {
+                TotalClientesAsignados = totalClientes,
+                TotalDeudaAsignada = deudaTotal,
+                TotalPagosRecuperados = montoPagado,
+                EficienciaIndividual = $"{Math.Round(eficienciaCalculada, 1)}%"
+            };
+        }
+
+        public async Task<List<ResumenClienteDto>> GetResumenClientesPorAsesorAsync(int idAsesor)
+        {
+            return await _context.Set<Cliente>()
+                .AsNoTracking()
+                .Where(c => c.IdAsesor == idAsesor && c.Activo && !c.Eliminado)
+                .GroupBy(c => c.EstadoCliente)
+                .Select(g => new ResumenClienteDto
+                {
+                    Estado = g.Key ?? "Desconocido",
+                    Cantidad = g.Count(),
+                    DeudaTotal = _context.Set<Deudum>().Where(d => g.Select(c => c.IdCliente).Contains(d.IdCliente)).Sum(d => d.MontoTotal),
+                    Porcentaje = 0.0
+                }).ToListAsync();
+        }
+        public async Task<Usuario?> GetAsesorPorIdAsync(int idAsesor)
+        {
+            return await _context.Set<Usuario>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.IdUsuario == idAsesor && u.Activo && !u.Eliminado);
         }
     }
 }

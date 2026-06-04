@@ -17,6 +17,7 @@ namespace GestionCobranza_backend.Controllers
             _reporteService = reporteService;
         }
 
+        // GET: api/reportes/gerencial
         [HttpGet("gerencial")]
         public async Task<ActionResult<ReporteGerencialDto>> ObtenerReporteGerencial()
         {
@@ -31,6 +32,7 @@ namespace GestionCobranza_backend.Controllers
             }
         }
 
+        // POST: api/reportes/descargar-excel
         [HttpPost("descargar-excel")]
         public async Task<IActionResult> DescargarYRegistrarReporte([FromBody] GenerarReporteRequestDto request)
         {
@@ -41,10 +43,6 @@ namespace GestionCobranza_backend.Controllers
 
             try
             {
-                // ====================================================================
-                // CORRECCIÓN CLAVE: Cambiamos el ID simulado a 2.
-                // Según tus datos reales de PostgreSQL, Jimena Rodríguez (Admin) tiene id_usuario = 2.
-                // ====================================================================
                 int idUsuarioSimulado = 2;
 
                 string urlArchivo = await _reporteService.GenerarYRegistrarReporteAsync(request, idUsuarioSimulado);
@@ -54,6 +52,47 @@ namespace GestionCobranza_backend.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, $"Error al procesar el registro de descarga: {ex.Message}");
+            }
+        }
+
+        // GET: api/reportes/asesor
+        [HttpGet("asesor")]
+        public async Task<ActionResult<ReporteRendimientoIndividualDto>> ObtenerReporteAsesor()
+        {
+            try
+            {
+                int idAsesorSimulado = 3;
+
+                var resultado = await _reporteService.GetDashboardIndividualAsync(idAsesorSimulado);
+                return Ok(resultado); // HTTP 200
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno al obtener el rendimiento del asesor: {ex.Message}");
+            }
+        }
+
+        // POST: api/reportes/asesor/descargar-excel
+        [HttpPost("asesor/descargar-excel")]
+        public async Task<IActionResult> DescargarYRegistrarReporteAsesor([FromBody] GenerarReporteRequestDto request)
+        {
+            if (request == null)
+            {
+                return BadRequest("Los parámetros para el reporte del asesor no son válidos.");
+            }
+
+            try
+            {
+                // ID simulado de Asesor (Marcelo Panduro = ID 3) según tus tablas de PostgreSQL
+                int idAsesorSimulado = 3;
+
+                string urlArchivo = await _reporteService.GenerarYRegistrarReporteAsesorAsync(request, idAsesorSimulado);
+
+                return Created("", new { mensaje = "Reporte de rendimiento individual registrado con éxito", url = urlArchivo });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error al procesar la descarga del asesor: {ex.Message}");
             }
         }
     }
