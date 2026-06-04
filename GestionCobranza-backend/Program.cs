@@ -61,7 +61,21 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        npgsqlOptions =>
+        {
+            npgsqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 3,
+                maxRetryDelay: TimeSpan.FromSeconds(5),
+                errorCodesToAdd: null
+            );
+
+            npgsqlOptions.CommandTimeout(30);
+        }
+    )
+);
+
 builder.Services.AddScoped<IReporteRepository, ReporteRepository>();
 builder.Services.AddScoped<IReporteService, ReporteService>();
 
