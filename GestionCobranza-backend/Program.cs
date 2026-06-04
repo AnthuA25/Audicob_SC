@@ -96,7 +96,10 @@ if (app.Environment.IsDevelopment())
 
 // app.UseHttpsRedirection();
 
+app.UseStaticFiles();
+
 app.UseCors("ReactPolicy");
+
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -108,3 +111,5 @@ app.MapControllers();
 var port = Environment.GetEnvironmentVariable("PORT") ?? "10000";
 
 app.Run($"http://0.0.0.0:{port}");
+
+// app.Run("http://localhost:5138");

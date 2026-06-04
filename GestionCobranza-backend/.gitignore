@@ -27,3 +27,7 @@ Thumbs.db
 # Secrets
 appsettings.Development.json
 appsettings.Local.json
+
+# Reportes generados
+wwwroot/reportes/*
+!wwwroot/reportes/.gitkeep
