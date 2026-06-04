@@ -23,7 +23,7 @@ public class AlertasController : ControllerBase
     [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> ResumenAdmin()
     {
-        var resumen = await CalcularResumenAsync(idAsesor: null);
+        var resumen = await CalcularResumenAsync(null);
         return Ok(resumen);
     }
 
@@ -31,22 +31,31 @@ public class AlertasController : ControllerBase
     [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> ListarAdmin([FromQuery] bool? soloNoLeidas)
     {
-        var alertas = await ListarAlertasAsync(idAsesor: null, soloNoLeidas);
+        await GenerarAlertasAutomaticasAsync(null);
+        var alertas = await ListarAlertasAsync(null, soloNoLeidas);
         return Ok(alertas);
     }
 
-    [HttpGet("asesor/{idAsesor:int}/resumen")]
-    [Authorize(Roles = "Asesor,Administrador")]
-    public async Task<IActionResult> ResumenAsesor(int idAsesor)
+    [HttpGet("asesor/resumen")]
+    [Authorize(Roles = "Asesor")]
+    public async Task<IActionResult> ResumenAsesor()
     {
+        int idAsesor = ObtenerIdUsuarioToken();
+
+        await GenerarAlertasAutomaticasAsync(idAsesor);
+
         var resumen = await CalcularResumenAsync(idAsesor);
         return Ok(resumen);
     }
 
-    [HttpGet("asesor/{idAsesor:int}")]
-    [Authorize(Roles = "Asesor,Administrador")]
-    public async Task<IActionResult> ListarAsesor(int idAsesor, [FromQuery] bool? soloNoLeidas)
+    [HttpGet("asesor")]
+    [Authorize(Roles = "Asesor")]
+    public async Task<IActionResult> ListarAsesor([FromQuery] bool? soloNoLeidas)
     {
+        int idAsesor = ObtenerIdUsuarioToken();
+
+        await GenerarAlertasAutomaticasAsync(idAsesor);
+
         var alertas = await ListarAlertasAsync(idAsesor, soloNoLeidas);
         return Ok(alertas);
     }
@@ -56,28 +65,114 @@ public class AlertasController : ControllerBase
     public async Task<IActionResult> MarcarLeida(int idAlerta)
     {
         var alerta = await _context.Alerta
-            .FirstOrDefaultAsync(a => a.IdAlerta == idAlerta && !a.Eliminado);
+            .Include(a => a.IdClienteNavigation)
+            .FirstOrDefaultAsync(a =>
+                a.IdAlerta == idAlerta &&
+                a.Activo &&
+                !a.Eliminado
+            );
 
         if (alerta == null)
             return NotFound(new { message = "Alerta no encontrada." });
 
-        var rol = User.FindFirst(ClaimTypes.Role)?.Value ?? "USUARIO";
-        var idUsuario = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0";
+        if (EsAsesor())
+        {
+            int idAsesor = ObtenerIdUsuarioToken();
+
+            if (alerta.IdClienteNavigation == null ||
+                alerta.IdClienteNavigation.IdAsesor != idAsesor)
+            {
+                return Forbid();
+            }
+        }
 
         alerta.Leido = true;
-        alerta.FechaModificacion = DateTime.Now;
-        alerta.UsuarioModificacion = $"{rol.ToUpper()}_{idUsuario}";
+        alerta.FechaModificacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
+        alerta.UsuarioModificacion = $"{ObtenerRolToken()}_{ObtenerIdUsuarioToken()}";
 
         await _context.SaveChangesAsync();
 
         return Ok(new { message = "Alerta marcada como leída." });
     }
 
+
+    private async Task GenerarAlertasAutomaticasAsync(int? idAsesor)
+    {
+        var query = _context.Deuda
+            .Include(d => d.IdClienteNavigation)
+            .Where(d =>
+                d.Activo &&
+                !d.Eliminado &&
+                d.EstadoDeuda != "PAGADO" &&
+                d.DiasAtraso > 0 &&
+                d.IdClienteNavigation.Activo &&
+                !d.IdClienteNavigation.Eliminado
+            );
+
+        if (idAsesor.HasValue)
+        {
+            query = query.Where(d =>
+                d.IdClienteNavigation.IdAsesor == idAsesor.Value
+            );
+        }
+
+        var deudas = await query.ToListAsync();
+
+        foreach (var deuda in deudas)
+        {
+            bool yaExiste = await _context.Alerta.AnyAsync(a =>
+                a.IdDeuda == deuda.IdDeuda &&
+                a.Activo &&
+                !a.Eliminado
+            );
+
+            if (yaExiste)
+                continue;
+
+            string prioridad = deuda.DiasAtraso switch
+            {
+                > 30 => "Alta",
+                >= 16 => "Alta",
+                >= 5 => "Media",
+                _ => "Baja"
+            };
+
+            string tipoAlerta = deuda.DiasAtraso >= 16
+                ? "Riesgo de morosidad"
+                : "Recordatorio de pago";
+
+            string nombreCliente =
+                $"{deuda.IdClienteNavigation.Nombres} {deuda.IdClienteNavigation.Apellidos}";
+
+            var alerta = new Alertum
+            {
+                IdCliente = deuda.IdCliente,
+                IdDeuda = deuda.IdDeuda,
+                TipoAlerta = tipoAlerta,
+                Mensaje = $"{nombreCliente} tiene {deuda.DiasAtraso} días de atraso y S/ {deuda.SaldoPendiente} de deuda",
+                Prioridad = prioridad,
+                Leido = false,
+                FechaAlerta = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified),
+                FechaRegistro = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified),
+                UsuarioRegistro = "SISTEMA",
+                Activo = true,
+                Eliminado = false
+            };
+
+            await _context.Alerta.AddAsync(alerta);
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
+
     private async Task<ResumenAlertasDto> CalcularResumenAsync(int? idAsesor)
     {
         var query = _context.Deuda
-            .Where(d => !d.Eliminado
+            .AsNoTracking()
+            .Where(d => d.Activo && !d.Eliminado
                      && d.EstadoDeuda != "PAGADO"
+                     && d.IdClienteNavigation.Activo
                      && !d.IdClienteNavigation.Eliminado);
 
         if (idAsesor.HasValue)
@@ -96,10 +191,17 @@ public class AlertasController : ControllerBase
     private async Task<List<AlertaResponseDto>> ListarAlertasAsync(int? idAsesor, bool? soloNoLeidas)
     {
         var query = _context.Alerta
-            .Where(a => !a.Eliminado);
+            .AsNoTracking()
+            .Where(a =>  a.Activo && !a.Eliminado);
+
 
         if (idAsesor.HasValue)
-            query = query.Where(a => a.IdClienteNavigation!.IdAsesor == idAsesor.Value);
+        {
+            query = query.Where(a =>
+                a.IdClienteNavigation != null &&
+                a.IdClienteNavigation.IdAsesor == idAsesor.Value
+            );
+        }
 
         if (soloNoLeidas == true)
             query = query.Where(a => !a.Leido);
@@ -112,7 +214,7 @@ public class AlertasController : ControllerBase
                 IdCliente = a.IdCliente ?? 0,
                 NombreCliente = a.IdClienteNavigation != null
                     ? a.IdClienteNavigation.Nombres + " " + a.IdClienteNavigation.Apellidos
-                    : string.Empty,
+                    : "",
                 IdDeuda = a.IdDeuda,
                 TipoAlerta = a.TipoAlerta,
                 Mensaje = a.Mensaje,
@@ -121,5 +223,30 @@ public class AlertasController : ControllerBase
                 FechaAlerta = a.FechaAlerta
             })
             .ToListAsync();
+    }
+    private int ObtenerIdUsuarioToken()
+    {
+        var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                 ?? User.FindFirst("idUsuario")?.Value
+                 ?? User.FindFirst("IdUsuario")?.Value;
+
+        if (string.IsNullOrEmpty(id))
+            throw new Exception("El token no contiene el id del usuario.");
+
+        return int.Parse(id);
+    }
+
+    private string ObtenerRolToken()
+    {
+        return User.FindFirst(ClaimTypes.Role)?.Value
+               ?? User.FindFirst("rol")?.Value
+               ?? "USUARIO";
+    }
+
+    private bool EsAsesor()
+    {
+        var rol = ObtenerRolToken();
+
+        return rol.Equals("Asesor", StringComparison.OrdinalIgnoreCase);
     }
 }
