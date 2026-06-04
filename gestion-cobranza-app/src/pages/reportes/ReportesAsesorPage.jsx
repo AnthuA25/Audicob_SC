@@ -1,64 +1,77 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Download, FileText, Calendar } from "lucide-react";
+import {
+  getReporteAsesorApi,
+  generarReporteAsesorApi,
+} from "../../api/reportesApi";
 import "../../styles/reportes.css";
 
-const resumenClientesData = [
-  { estado: "Nuevo", cantidad: 0, deudaTotal: "S./ 0", porcentaje: "0.0%" },
-  {
-    estado: "Contactado",
-    cantidad: 1,
-    deudaTotal: "S./ 12,000",
-    porcentaje: "33.3%",
-  },
-  {
-    estado: "Negociacion",
-    cantidad: 1,
-    deudaTotal: "S./ 5,500",
-    porcentaje: "33.3%",
-  },
-  {
-    estado: "Promesa pago",
-    cantidad: 0,
-    deudaTotal: "S./ 0",
-    porcentaje: "0.0%",
-  },
-  { estado: "Pagado", cantidad: 1, deudaTotal: "S./ 0", porcentaje: "33.3%" },
-  { estado: "Moroso", cantidad: 0, deudaTotal: "S./ 0", porcentaje: "0.0%" },
+const tiposReporteAsesor = [
+  "Mi Cartera",
+  "Mis Clientes",
+  "Mis Deudas",
+  "Mis Pagos Recuperados",
+  "Mis Gestiones",
+  "Mis Alertas",
 ];
 
-const reportesRecientes = [
-  {
-    id: 1,
-    nombre: "Estado de cuenta - Marzo 2026",
-    fecha: "11/03/2026 10:30",
-    tamanio: "2.4 MB",
-  },
-  {
-    id: 2,
-    nombre: "Métricas de desempeño - Febrero 2026",
-    fecha: "01/03/2026 14:15",
-    tamanio: "1.8 MB",
-  },
-  {
-    id: 3,
-    nombre: "Reporte crediticio completo",
-    fecha: "05/03/2026 16:45",
-    tamanio: "3.2 MB",
-  },
-  {
-    id: 4,
-    nombre: "Estado de cuenta - Marzo 2026",
-    fecha: "11/03/2026 10:30",
-    tamanio: "2.4 MB",
-  },
-];
+const formatoSoles = (valor) => {
+  return `S./ ${Number(valor || 0).toLocaleString("es-PE", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
+
+const formatoFecha = (fecha) => {
+  if (!fecha) return "";
+  return new Date(fecha).toLocaleString("es-PE");
+};
+
 
 const ReportesAsesorPage = () => {
   const [tipoReporte, setTipoReporte] = useState("Reporte General");
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
+  const [resumenClientesData, setResumenClientesData] = useState([]);
+  const [reportesRecientes, setReportesRecientes] = useState([]);
+
   const fechaDesdeRef = useRef();
   const fechaHastaRef = useRef();
+
+  const cargarDatos = async () => {
+    try {
+      const data = await getReporteAsesorApi();
+
+      setResumenClientesData(data.distribucionClientes || []);
+      setReportesRecientes(data.reportesRecientes || []);
+    } catch (error) {
+      console.error("Error al cargar reportes del asesor:", error);
+    }
+  };
+
+  const descargarExcel = async () => {
+    try {
+      const data = await generarReporteAsesorApi({
+        tipoReporte,
+        fechaDesde: fechaDesde || null,
+        fechaHasta: fechaHasta || null,
+      });
+
+      if (data.urlDescarga) {
+        window.open(data.urlDescarga, "_blank");
+      }
+
+      await cargarDatos();
+    } catch (error) {
+      console.error("Error al descargar reporte:", error);
+      alert("No se pudo descargar el reporte.");
+    }
+  };
+
+  useEffect(() => {
+    cargarDatos();
+  }, []);
+
 
   return (
     <div>
@@ -76,10 +89,11 @@ const ReportesAsesorPage = () => {
               value={tipoReporte}
               onChange={(e) => setTipoReporte(e.target.value)}
             >
-              <option>Reporte General</option>
-              <option>Cobranza</option>
-              <option>Morosidad</option>
-              <option>Clientes</option>
+              {tiposReporteAsesor.map((tipo) => (
+                <option key={tipo} value={tipo}>
+                  {tipo}
+                </option>
+              ))}
             </select>
           </div>
           <div className="reporte-filtro-field">
@@ -106,7 +120,7 @@ const ReportesAsesorPage = () => {
                   right: "10px",
                   cursor: "pointer",
                 }}
-                onClick={() => fechaDesdeRef.current.showPicker()}
+                onClick={() => fechaDesdeRef.current?.showPicker()}
               />
             </div>
           </div>
@@ -134,12 +148,12 @@ const ReportesAsesorPage = () => {
                   right: "10px",
                   cursor: "pointer",
                 }}
-                onClick={() => fechaHastaRef.current.showPicker()}
+                onClick={() => fechaHastaRef.current?.showPicker()}
               />
             </div>
           </div>
         </div>
-        <button className="btn-descargar-excel">
+        <button className="btn-descargar-excel" onClick={descargarExcel}>
           <Download size={16} /> Descargar Excel
         </button>
       </div>
@@ -160,8 +174,8 @@ const ReportesAsesorPage = () => {
               <tr key={i}>
                 <td>{r.estado}</td>
                 <td>{r.cantidad}</td>
-                <td>{r.deudaTotal}</td>
-                <td>{r.porcentaje}</td>
+                <td>{formatoSoles(r.deudaTotal)}</td>
+                <td>{r.porcentaje}%</td>
               </tr>
             ))}
           </tbody>
@@ -172,19 +186,20 @@ const ReportesAsesorPage = () => {
         <h2>Reportes recientes</h2>
         <div className="reportes-recientes-list">
           {reportesRecientes.map((r) => (
-            <div className="reporte-reciente-item" key={r.id}>
+            <div className="reporte-reciente-item" key={r.idReporte}>
               <div className="reporte-reciente-info">
                 <div className="reporte-reciente-icon">
                   <FileText size={18} color="#3b82f6" />
                 </div>
                 <div className="reporte-reciente-texto">
-                  <strong>{r.nombre}</strong>
+                  <strong>{r.nombreReporte}</strong>
                   <span>
-                    {r.fecha} • {r.tamanio}
+                    {formatoFecha(r.fechaGeneracion)}
                   </span>
                 </div>
               </div>
-              <button className="btn-descargar-reporte">
+              <button className="btn-descargar-reporte"
+              onClick={() => window.open(r.archivoUrl, "_blank")}>
                 <Download size={16} />
               </button>
             </div>

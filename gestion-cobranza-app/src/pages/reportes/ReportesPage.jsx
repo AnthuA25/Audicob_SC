@@ -1,74 +1,84 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Download, FileText, Calendar } from "lucide-react";
+import {
+  getReporteAdminApi,
+  generarReporteAdminApi,
+} from "../../api/reportesApi";
 import "../../styles/reportes.css";
 
-const rendimientoData = [
-  {
-    asesor: "Carlos Rodríguez",
-    clientes: 145,
-    deudaGestionada: "S./ 1,200",
-    pagosRecuperados: "S./ 700",
-    eficiencia: "85%",
-  },
-  {
-    asesor: "Jonathan Perez",
-    clientes: 45,
-    deudaGestionada: "S./ 12,000",
-    pagosRecuperados: "S./ 1,200",
-    eficiencia: "75%",
-  },
-  {
-    asesor: "María López",
-    clientes: 85,
-    deudaGestionada: "S./ 5,500",
-    pagosRecuperados: "S./ 2,200",
-    eficiencia: "37%",
-  },
+
+const tiposReporteAdmin = [
+  "Reporte General",
+  "Rendimiento por Asesor",
+  "Resumen de Clientes",
+  "Reporte de Deudas",
+  "Reporte de Pagos",
+  "Reporte de Morosidad",
+  "Reporte de Alertas",
 ];
 
-const resumenClientesData = [
-  { estado: "Nuevo", cantidad: 0, deudaTotal: "S./ 0", porcentaje: "0.0%" },
-  {
-    estado: "Contactado",
-    cantidad: 1,
-    deudaTotal: "S./ 12,000",
-    porcentaje: "33.3%",
-  },
-  {
-    estado: "Negociacion",
-    cantidad: 1,
-    deudaTotal: "S./ 5,500",
-    porcentaje: "33.3%",
-  },
-  {
-    estado: "Promesa pago",
-    cantidad: 0,
-    deudaTotal: "S./ 0",
-    porcentaje: "0.0%",
-  },
-];
+const formatoSoles = (valor) => {
+  return `S./ ${Number(valor || 0).toLocaleString("es-PE", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
 
-const reportesRecientes = [
-  {
-    id: 1,
-    nombre: "Estado de cuenta - Marzo 2026",
-    fecha: "11/03/2026 10:30",
-    tamanio: "2.4 MB",
-  },
-  {
-    id: 2,
-    nombre: "Métricas de desempeño - Febrero 2026",
-    fecha: "01/03/2026 14:15",
-    tamanio: "1.8 MB",
-  },
-];
+const formatoFecha = (fecha) => {
+  if (!fecha) return "";
+  return new Date(fecha).toLocaleString("es-PE");
+};
 
 const ReportesPage = () => {
   const [tipoReporte, setTipoReporte] = useState("Reporte General");
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
+  const [rendimiento, setRendimiento] = useState([]);
+  const [resumenClientes, setResumenClientes] = useState([]);
+  const [reportesRecientes, setReportesRecientes] = useState([]);
+  const [loading, setLoading] = useState(false);
+
   const fechaDesdeRef = useRef();
   const fechaHastaRef = useRef();
+
+  const cargarDatos = async () => {
+    try {
+      setLoading(true);
+      const data = await getReporteAdminApi();
+
+      setRendimiento(data.rendimientoAsesores || []);
+      setResumenClientes(data.resumenClientes || []);
+      setReportesRecientes(data.reportesRecientes || []);
+    } catch (error) {
+      console.error("Error al cargar reportes admin:", error);
+      alert("No se pudieron cargar los reportes del administrador.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const descargarExcel = async () => {
+    try {
+      const data = await generarReporteAdminApi({
+        tipoReporte,
+        fechaDesde: fechaDesde || null,
+        fechaHasta: fechaHasta || null,
+      });
+
+      if (data.urlDescarga) {
+        window.open(data.urlDescarga, "_blank");
+      }
+
+      await cargarDatos();
+    } catch (error) {
+      console.error("Error al generar reporte:", error);
+      alert("No se pudo generar el reporte.");
+    }
+  };
+
+  useEffect(() => {
+    cargarDatos();
+  }, []);
 
   return (
     <div>
@@ -86,12 +96,14 @@ const ReportesPage = () => {
               value={tipoReporte}
               onChange={(e) => setTipoReporte(e.target.value)}
             >
-              <option>Reporte General</option>
-              <option>Cobranza</option>
-              <option>Morosidad</option>
-              <option>Clientes</option>
+              {tiposReporteAdmin.map((tipo) => (
+                <option key={tipo} value={tipo}>
+                  {tipo}
+                </option>
+              ))}
             </select>
           </div>
+
           <div className="reporte-filtro-field">
             <label>Fecha Desde</label>
             <div
@@ -116,7 +128,7 @@ const ReportesPage = () => {
                   right: "10px",
                   cursor: "pointer",
                 }}
-                onClick={() => fechaDesdeRef.current.showPicker()}
+                onClick={() => fechaDesdeRef.current?.showPicker()}
               />
             </div>
           </div>
@@ -145,15 +157,17 @@ const ReportesPage = () => {
                   right: "10px",
                   cursor: "pointer",
                 }}
-                onClick={() => fechaHastaRef.current.showPicker()}
+                onClick={() => fechaHastaRef.current?.showPicker()}
               />
             </div>
           </div>
         </div>
-        <button className="btn-descargar-excel">
+
+        <button className="btn-descargar-excel" onClick={descargarExcel}>
           <Download size={16} /> Descargar Excel
         </button>
       </div>
+      {/* Falta sintaxis -  2026. 01*/}
 
       <div className="reportes-card">
         <h2>Rendimiento por Asesor</h2>
@@ -168,12 +182,12 @@ const ReportesPage = () => {
             </tr>
           </thead>
           <tbody>
-            {rendimientoData.map((r, i) => (
+            {rendimiento.map((r, i) => (
               <tr key={i}>
                 <td>{r.asesor}</td>
                 <td>{r.clientes}</td>
-                <td>{r.deudaGestionada}</td>
-                <td className="verde">{r.pagosRecuperados}</td>
+                <td>{formatoSoles(r.deudaGestionada)}</td>
+                <td className="verde">{formatoSoles(r.pagosRecuperados)}</td>
                 <td>{r.eficiencia}</td>
               </tr>
             ))}
@@ -193,12 +207,12 @@ const ReportesPage = () => {
             </tr>
           </thead>
           <tbody>
-            {resumenClientesData.map((r, i) => (
+            {resumenClientes.map((r, i) => (
               <tr key={i}>
                 <td>{r.estado}</td>
                 <td>{r.cantidad}</td>
-                <td>{r.deudaTotal}</td>
-                <td>{r.porcentaje}</td>
+                <td>{formatoSoles(r.deudaTotal)}</td>
+                <td>{r.porcentaje}%</td>
               </tr>
             ))}
           </tbody>
@@ -209,19 +223,20 @@ const ReportesPage = () => {
         <h2>Reportes recientes</h2>
         <div className="reportes-recientes-list">
           {reportesRecientes.map((r) => (
-            <div className="reporte-reciente-item" key={r.id}>
+            <div className="reporte-reciente-item" key={r.idReporte}>
               <div className="reporte-reciente-info">
                 <div className="reporte-reciente-icon">
                   <FileText size={18} color="#3b82f6" />
                 </div>
                 <div className="reporte-reciente-texto">
-                  <strong>{r.nombre}</strong>
+                  <strong>{r.nombreReporte}</strong>
                   <span>
-                    {r.fecha} • {r.tamanio}
+                    {formatoFecha(r.fechaGeneracion)}
                   </span>
                 </div>
               </div>
-              <button className="btn-descargar-reporte">
+              <button className="btn-descargar-reporte"
+              onClick={() => window.open(r.archivoUrl, "_blank")}>
                 <Download size={16} />
               </button>
             </div>
