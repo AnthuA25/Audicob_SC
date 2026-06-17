@@ -80,7 +80,7 @@ const ClienteForm = ({
     if (!form.telefono.trim())
       nuevosErrores.telefono = "El teléfono es obligatorio.";
 
-    if (!form.idAsesor) nuevosErrores.idAsesor = "Selecciona un asesor.";
+    // if (!form.idAsesor) nuevosErrores.idAsesor = "Selecciona un asesor.";
 
     if (!clienteEditar && !form.montoDeuda)
       nuevosErrores.montoDeuda = "La deuda total es obligatoria.";
@@ -103,7 +103,7 @@ const ClienteForm = ({
     }
 
     onGuardar({
-      idAsesor: Number(form.idAsesor),
+      idAsesor: form.idAsesor ? Number(form.idAsesor) : null,
       nombres: form.nombres.trim(),
       apellidos: form.apellidos.trim(),
       dni: form.dni.trim(),
@@ -198,7 +198,7 @@ const ClienteForm = ({
         </div>
 
         <div className="form-field">
-          <label>Asesor Asignado *</label>
+          <label>Asesor Asignado</label>
           <select name="idAsesor" value={form.idAsesor} onChange={handleChange}>
             <option value="">Seleccionar asesor</option>
             {asesores.map((asesor) => (
