@@ -44,7 +44,7 @@ public class ClientesController : ControllerBase
                 DeudaTotal = c.Deuda
                 .Where(d => d.Activo && !d.Eliminado)
                 .Sum(d => d.MontoTotal),
-                
+
                 DeudaPendiente = c.Deuda
                 .Where(d => d.Activo && !d.Eliminado)
                 .Sum(d => d.SaldoPendiente),
@@ -142,6 +142,10 @@ public class ClientesController : ControllerBase
             return BadRequest(new { message = "La fecha de vencimiento no puede ser menor a la fecha de emisión." });
         }
 
+        var strategy = _context.Database.CreateExecutionStrategy();
+
+        return await strategy.ExecuteAsync(async () =>
+    {
         using var transaction = await _context.Database.BeginTransactionAsync();
 
         try
@@ -245,6 +249,7 @@ public class ClientesController : ControllerBase
                 interno = ex.InnerException?.Message
             });
         }
+    });
     }
 
     [HttpPut("{id}")]
