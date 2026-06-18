@@ -103,9 +103,15 @@ const ClienteForm = ({
       setErrores(nuevosErrores);
       return;
     }
+    const asesorSeleccionado = asesores.find(
+      (a) => a.idUsuario === Number(form.idAsesor),
+    );
 
     onGuardar({
       idAsesor: form.idAsesor ? Number(form.idAsesor) : null,
+      asesorAsignado: asesorSeleccionado
+        ? `${asesorSeleccionado.nombres} ${asesorSeleccionado.apellidos}`
+        : "",
       nombres: form.nombres.trim(),
       apellidos: form.apellidos.trim(),
       dni: form.dni.trim(),

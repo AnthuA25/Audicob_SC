@@ -85,6 +85,7 @@ const useClientes = () => {
           ? {
               ...c,
               ...cliente,
+              asesorAsignado: cliente.asesorAsignado ?? c.asesorAsignado,
               deudaTotal: Number(cliente.montoDeuda ?? c.deudaTotal),
               deudaTotalTexto: formatearMonto(
                 cliente.montoDeuda ?? c.deudaTotal,
