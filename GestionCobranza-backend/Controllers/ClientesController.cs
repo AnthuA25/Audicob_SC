@@ -331,7 +331,30 @@ public class ClientesController : ControllerBase
         return Ok(new
         {
             message = "Cliente actualizado correctamente.",
-            cliente
+            cliente = new
+            {
+                cliente.IdCliente,
+                cliente.Nombres,
+                cliente.Apellidos,
+                cliente.Dni,
+                cliente.Correo,
+                cliente.Telefono,
+                cliente.Direccion,
+                cliente.EstadoCliente,
+                cliente.Riesgo,
+                cliente.Observacion,
+                cliente.IdAsesor,
+                DeudaTotal = cliente.Deuda
+            .Where(d => d.Activo && !d.Eliminado)
+            .Sum(d => d.MontoTotal),
+                DiasAtraso = cliente.Deuda
+            .Where(d => d.Activo && !d.Eliminado)
+            .Any()
+                ? cliente.Deuda
+                    .Where(d => d.Activo && !d.Eliminado)
+                    .Max(d => d.DiasAtraso)
+                : 0
+            }
         });
     }
 
