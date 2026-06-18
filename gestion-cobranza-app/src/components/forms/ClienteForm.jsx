@@ -47,7 +47,7 @@ const ClienteForm = ({
         direccion: clienteEditar.direccion || "",
         idAsesor: clienteEditar.idAsesor || "",
         observacion: clienteEditar.observacion || "",
-        montoDeuda: clienteEditar.deudaTotal || "",
+        montoDeuda: clienteEditar.deudaTotal ?? "",
         fechaVencimiento: clienteEditar.fechaVencimiento || "",
       });
     }
