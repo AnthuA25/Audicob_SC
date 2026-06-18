@@ -257,6 +257,7 @@ public class ClientesController : ControllerBase
     public async Task<IActionResult> ActualizarCliente(int id, [FromBody] UpdateClienteDto dto)
     {
         var cliente = await _context.Clientes
+            .Include(c => c.Deuda)
             .FirstOrDefaultAsync(c => c.IdCliente == id && c.Activo && !c.Eliminado);
 
         if (cliente == null)
