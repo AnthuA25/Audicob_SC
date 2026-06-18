@@ -19,7 +19,8 @@ const mapCliente = (c) => ({
   asesorAsignado: c.asesor ?? "",
   riesgo: capitalizar(c.riesgo ?? "BAJO"),
   estado: capitalizar(c.estadoCliente ?? "NUEVO"),
-  deudaTotal: formatearMonto(c.deudaTotal),
+  deudaTotal: Number(c.deudaTotal ?? 0),
+  deudaTotalTexto: formatearMonto(c.deudaTotal),
   diasAtraso: c.diasAtraso ?? 0,
 });
 
@@ -76,7 +77,10 @@ const useClientes = () => {
   const editarCliente = async (id, cliente) => {
     const response = await actualizarCliente(id, cliente);
     const actualizado = response.cliente
-      ? mapCliente(response.cliente)
+      ? mapCliente({
+          ...response.cliente,
+          asesor: cliente.asesorAsignado,
+        })
       : mapCliente(response);
 
     setClientes((prev) => prev.map((c) => (c.id === id ? actualizado : c)));
