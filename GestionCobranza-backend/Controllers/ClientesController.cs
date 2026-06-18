@@ -325,6 +325,30 @@ public class ClientesController : ControllerBase
                 deuda.UsuarioModificacion = User.Identity?.Name ?? "system";
             }
         }
+        else
+        {
+            var fechaEmision = DateOnly.FromDateTime(DateTime.Today);
+            var fechaVencimiento = dto.FechaVencimiento ?? fechaEmision.AddDays(30);
+
+            var nuevaDeuda = new Deudum
+            {
+                IdCliente = cliente.IdCliente,
+                MontoTotal = dto.MontoDeuda.Value,
+                MontoPagado = 0,
+                SaldoPendiente = dto.MontoDeuda.Value,
+                FechaEmision = fechaEmision,
+                FechaVencimiento = fechaVencimiento,
+                DiasAtraso = 0,
+                EstadoDeuda = "PENDIENTE",
+                Descripcion = "Deuda actualizada del cliente",
+                FechaRegistro = DateTime.Now,
+                UsuarioRegistro = User.Identity?.Name ?? "system",
+                Activo = true,
+                Eliminado = false
+            };
+
+            _context.Deuda.Add(nuevaDeuda);
+        }
 
         await _context.SaveChangesAsync();
 
