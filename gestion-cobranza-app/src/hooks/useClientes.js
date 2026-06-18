@@ -6,23 +6,26 @@ import {
   eliminarCliente,
 } from "../services/clienteService";
 
-const mapCliente = (c) => ({
-  id: c.idCliente,
-  nombre: `${c.nombres ?? ""} ${c.apellidos ?? ""}`.trim(),
-  nombres: c.nombres ?? "",
-  apellidos: c.apellidos ?? "",
-  email: c.correo ?? "",
-  dni: c.dni ?? "",
-  telefono: c.telefono ?? "",
-  direccion: c.direccion ?? "",
-  idAsesor: c.idAsesor ?? null,
-  asesorAsignado: c.asesor ?? "",
-  riesgo: capitalizar(c.riesgo ?? "BAJO"),
-  estado: capitalizar(c.estadoCliente ?? "NUEVO"),
-  deudaTotal: Number(c.deudaTotal ?? 0),
-  deudaTotalTexto: formatearMonto(c.deudaTotal),
-  diasAtraso: c.diasAtraso ?? 0,
-});
+const mapCliente = (c) => {
+  const deuda = c.deudaTotal ?? c.DeudaTotal ?? 0;
+  return {
+    id: c.idCliente,
+    nombre: `${c.nombres ?? ""} ${c.apellidos ?? ""}`.trim(),
+    nombres: c.nombres ?? "",
+    apellidos: c.apellidos ?? "",
+    email: c.correo ?? "",
+    dni: c.dni ?? "",
+    telefono: c.telefono ?? "",
+    direccion: c.direccion ?? "",
+    idAsesor: c.idAsesor ?? null,
+    asesorAsignado: c.asesor ?? "",
+    riesgo: capitalizar(c.riesgo ?? "BAJO"),
+    estado: capitalizar(c.estadoCliente ?? "NUEVO"),
+    deudaTotal: Number(deuda),
+    deudaTotalTexto: formatearMonto(c.deudaTotal),
+    diasAtraso: c.diasAtraso ?? 0,
+  };
+};
 
 const capitalizar = (texto) =>
   texto ? texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase() : "";
@@ -76,14 +79,16 @@ const useClientes = () => {
 
   const editarCliente = async (id, cliente) => {
     const response = await actualizarCliente(id, cliente);
-    const actualizado = response.cliente
-      ? mapCliente({
-          ...response.cliente,
-          asesor: cliente.asesorAsignado,
-        })
-      : mapCliente(response);
+
+    const data = response.cliente ?? response;
+
+    const actualizado = mapCliente({
+      ...data,
+      asesor: clientes.find((c) => c.id === id)?.asesorAsignado ?? "",
+    });
 
     setClientes((prev) => prev.map((c) => (c.id === id ? actualizado : c)));
+
     return actualizado;
   };
 
