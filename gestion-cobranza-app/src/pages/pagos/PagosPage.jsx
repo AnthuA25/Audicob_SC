@@ -308,7 +308,7 @@ const PagosPage = () => {
               <label>Cliente</label>
               <select
                 name="idCliente"
-                value={form.idClientecliente}
+                value={form.idCliente}
                 onChange={handleChange}
                 style={errores.cliente ? { borderColor: "#ef4444" } : {}}
               >
