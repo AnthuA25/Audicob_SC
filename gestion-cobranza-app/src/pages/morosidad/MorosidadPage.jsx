@@ -14,8 +14,8 @@ import {
   EstadoBadge,
   RiesgoBadge,
 } from "../../components/clientes/ClienteEstadoBadge";
+import { descargarReporteMorosidadApi } from "../../api/morosidadApi";
 import "../../styles/morosidad.css";
-
 
 const MorosidadPage = () => {
   const navigate = useNavigate();
@@ -35,6 +35,14 @@ const MorosidadPage = () => {
     return "dias-atraso bajo";
   };
 
+  const handleGenerarReporte = async () => {
+    try {
+      await descargarReporteMorosidadApi();
+    } catch (error) {
+      console.error("Error al generar reporte:", error);
+    }
+  };
+
   if (loading) return <div>Cargando...</div>;
 
   return (
@@ -44,11 +52,11 @@ const MorosidadPage = () => {
           <h1>Seguimiento de morosidad</h1>
           <p>Monitoreo y análisis de cuentas morosas</p>
         </div>
-        <button className="btn-reporte">
+        <button className="btn-reporte" onClick={handleGenerarReporte}>
           <FileBarChart size={16} /> Generar Reporte
         </button>
       </div>
-      
+
       {error && <p style={{ color: "red" }}>{error}</p>}
 
       <div className="morosidad-metricas">
@@ -149,7 +157,10 @@ const MorosidadPage = () => {
                   <EstadoBadge estado={m.estado} />
                 </td>
                 <td>
-                  <button className="btn-ver" onClick={() => navigate(`/mis-clientes/${m.id}`)}>
+                  <button
+                    className="btn-ver"
+                    onClick={() => navigate(`/mis-clientes/${m.id}`)}
+                  >
                     <Eye size={15} />
                   </button>
                 </td>
