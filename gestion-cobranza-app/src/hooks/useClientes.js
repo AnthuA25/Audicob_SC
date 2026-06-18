@@ -78,18 +78,10 @@ const useClientes = () => {
   };
 
   const editarCliente = async (id, cliente) => {
-    const response = await actualizarCliente(id, cliente);
+    await actualizarCliente(id, cliente);
+    await cargarClientes();
 
-    const data = response.cliente ?? response;
-
-    const actualizado = mapCliente({
-      ...data,
-      asesor: clientes.find((c) => c.id === id)?.asesorAsignado ?? "",
-    });
-
-    setClientes((prev) => prev.map((c) => (c.id === id ? actualizado : c)));
-
-    return actualizado;
+    return true;
   };
 
   const borrarCliente = async (id) => {

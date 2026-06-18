@@ -50,8 +50,6 @@ const ClientesPage = () => {
           riesgo: clienteEditar.riesgo?.toUpperCase() || "BAJO",
         });
 
-        await cargarClientes();
-
         mostrarToast("Cliente actualizado exitosamente");
         setClienteEditar(null);
       } else {
@@ -138,9 +136,7 @@ const ClientesPage = () => {
                   </div>
                 </td>
                 <td>{cliente.asesorAsignado || "-"}</td>
-                <td>
-                  {cliente.deudaTotalTexto || "-"}
-                </td>
+                <td>{cliente.deudaTotalTexto || "-"}</td>
                 <td>
                   <span className="dias-atraso pendiente">
                     {cliente.diasAtraso > 0
