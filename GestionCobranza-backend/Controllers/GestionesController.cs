@@ -60,6 +60,31 @@ public class GestionesController : ControllerBase
         };
 
         _context.GestionCobranzas.Add(gestion);
+        var cliente = await _context.Clientes
+    .FirstOrDefaultAsync(c =>
+        c.IdCliente == dto.IdCliente &&
+        c.Activo &&
+        !c.Eliminado);
+
+        if (cliente != null && !string.IsNullOrWhiteSpace(dto.Resultado))
+        {
+            var resultado = dto.Resultado.Trim().ToUpper();
+
+            if (resultado == "CONTACTADO")
+                cliente.EstadoCliente = "CONTACTADO";
+            else if (resultado == "NEGOCIACION" || resultado == "NEGOCIACIÓN")
+                cliente.EstadoCliente = "NEGOCIACION";
+            else if (resultado == "PROMESA DE PAGO")
+                cliente.EstadoCliente = "PROMESA DE PAGO";
+            else if (resultado == "PAGADO")
+                cliente.EstadoCliente = "PAGADO";
+            else if (resultado == "MOROSO")
+                cliente.EstadoCliente = "MOROSO";
+
+            cliente.FechaModificacion = DateTime.Now;
+            cliente.UsuarioModificacion = User.Identity?.Name ?? "system";
+        }
+
         await _context.SaveChangesAsync();
 
         var respuesta = MapToDto(gestion);

@@ -1,7 +1,7 @@
 const coloresEstado = {
   CONTACTADO: { bg: "#ede9fe", color: "#7c3aed" },
   NEGOCIACION: { bg: "#fef9c3", color: "#ca8a04" },
-  "Promesa de Pago": { bg: "#dbeafe", color: "#2563eb" },
+  "PROMESA DE PAGO": { bg: "#dbeafe", color: "#2563eb" },
   PAGADO: { bg: "#dcfce7", color: "#16a34a" },
   MOROSO: { bg: "#fee2e2", color: "#dc2626" },
 };

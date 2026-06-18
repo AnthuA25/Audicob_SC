@@ -375,13 +375,19 @@ const MiClienteDetallePage = () => {
 
             <div className="form-field">
               <label>Resultado</label>
-              <input
-                placeholder="Ej: Comprometido, Sin respuesta, Positivo"
+              <select
                 value={formGestion.resultado}
                 onChange={(e) =>
                   setFormGestion({ ...formGestion, resultado: e.target.value })
                 }
-              />
+              >
+                <option value="">Seleccionar resultado</option>
+                <option value="CONTACTADO">Contactado</option>
+                <option value="NEGOCIACION">Negociación</option>
+                <option value="PROMESA DE PAGO">Promesa de Pago</option>
+                <option value="PAGADO">Pagado</option>
+                <option value="MOROSO">Moroso</option>
+              </select>
             </div>
 
             <div className="form-field">
