@@ -136,6 +136,7 @@ const ClientesPage = () => {
                   </div>
                 </td>
                 <td>{cliente.asesorAsignado || "-"}</td>
+                {console.log(cliente.deudaTotalTexto)}
                 <td>{cliente.deudaTotalTexto || "-"}</td>
                 <td>
                   <span className="dias-atraso pendiente">
