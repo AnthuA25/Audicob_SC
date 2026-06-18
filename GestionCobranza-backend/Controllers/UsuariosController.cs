@@ -187,7 +187,23 @@ public class UsuariosController : ControllerBase
                 u.Dni,
                 u.Correo,
                 u.Telefono,
-                u.Estado
+                u.Estado,
+                ClientesAsignados = _context.Clientes
+                    .Count(c => c.IdAsesor == u.IdUsuario && c.Activo && !c.Eliminado),
+
+                DeudaGestionada = _context.Clientes
+                    .Where(c => c.IdAsesor == u.IdUsuario && c.Activo && !c.Eliminado)
+                    .SelectMany(c => c.Deuda)
+                    .Where(d => d.Activo && !d.Eliminado)
+                    .Sum(d => d.MontoTotal),
+
+                PagosRecuperados = _context.Clientes
+                    .Where(c => c.IdAsesor == u.IdUsuario && c.Activo && !c.Eliminado)
+                    .SelectMany(c => c.Deuda)
+                    .SelectMany(d => d.Pagos)
+                    .Where(p => p.Activo && !p.Eliminado)
+                    .Sum(p => p.Monto)
+
             })
             .ToListAsync();
 

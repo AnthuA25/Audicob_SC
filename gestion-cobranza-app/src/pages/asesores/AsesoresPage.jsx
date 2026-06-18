@@ -6,8 +6,14 @@ import { AsesorEstadoBadge } from "../../components/asesores/AsesorEstadoBadge";
 import "../../styles/clientes.css";
 
 const AsesoresPage = () => {
-  const { asesores, loading, error, agregarAsesor, editarAsesor, borrarAsesor } =
-    useAsesores();
+  const {
+    asesores,
+    loading,
+    error,
+    agregarAsesor,
+    editarAsesor,
+    borrarAsesor,
+  } = useAsesores();
 
   const [busqueda, setBusqueda] = useState("");
   const [modalNuevo, setModalNuevo] = useState(false);
@@ -25,12 +31,14 @@ const AsesoresPage = () => {
       (a) =>
         a.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
         a.correo.toLowerCase().includes(busqueda.toLowerCase()) ||
-        a.dni.toLowerCase().includes(busqueda.toLowerCase())
+        a.dni.toLowerCase().includes(busqueda.toLowerCase()),
     );
   }, [asesores, busqueda]);
 
   const asesoresActivos = asesores.filter((a) => a.estado === "Activo").length;
-  const asesoresInactivos = asesores.filter((a) => a.estado === "Inactivo").length;
+  const asesoresInactivos = asesores.filter(
+    (a) => a.estado === "Inactivo",
+  ).length;
 
   const handleGuardar = async (form) => {
     try {
@@ -105,6 +113,9 @@ const AsesoresPage = () => {
               <th>Asesor</th>
               <th>Contacto</th>
               <th>DNI</th>
+              <th>Clientes</th>
+              <th>Deuda Gestionada</th>
+              <th>Pagos Recuperados</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
@@ -120,6 +131,9 @@ const AsesoresPage = () => {
                   </div>
                 </td>
                 <td>{asesor.dni}</td>
+                <td>{asesor.clientesAsignados}</td>
+                <td>S/. {Number(asesor.deudaGestionada).toLocaleString()}</td>
+                <td>S/. {Number(asesor.pagosRecuperados).toLocaleString()}</td>
                 <td>
                   <AsesorEstadoBadge estado={asesor.estado} />
                 </td>

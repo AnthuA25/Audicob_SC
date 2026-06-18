@@ -19,6 +19,9 @@ const mapAsesor = (a) => ({
   correo: a.correo ?? "",
   telefono: a.telefono ?? "",
   estado: capitalizar(a.estado ?? "ACTIVO"),
+  clientesAsignados: a.clientesAsignados ?? 0,
+  deudaGestionada: a.deudaGestionada ?? 0,
+  pagosRecuperados: a.pagosRecuperados ?? 0,
 });
 
 const useAsesores = () => {
@@ -46,7 +49,9 @@ const useAsesores = () => {
 
   const agregarAsesor = async (asesor) => {
     const response = await crearAsesor(asesor);
-    const nuevo = response.asesor ? mapAsesor(response.asesor) : mapAsesor(response);
+    const nuevo = response.asesor
+      ? mapAsesor(response.asesor)
+      : mapAsesor(response);
     setAsesores((prev) => [...prev, nuevo]);
     return nuevo;
   };
