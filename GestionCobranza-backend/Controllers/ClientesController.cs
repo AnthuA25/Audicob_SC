@@ -462,16 +462,17 @@ public class ClientesController : ControllerBase
         return Ok(clientes);
     }
     [HttpGet("mis-clientes/{id}")]
-    [Authorize(Roles = "Asesor")]
+    [Authorize(Roles = "Asesor,Administrador")]
     public async Task<IActionResult> ObtenerMiClienteDetalle(int id)
     {
         var idUsuarioClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var rolUsuario = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
 
         if (string.IsNullOrWhiteSpace(idUsuarioClaim) || !int.TryParse(idUsuarioClaim, out var idAsesor))
         {
             return Unauthorized(new
             {
-                message = "No se pudo identificar al asesor autenticado."
+                message = "No se pudo identificar al usuario autenticado."
             });
         }
 
@@ -485,13 +486,13 @@ public class ClientesController : ControllerBase
                 c.IdCliente == id &&
                 c.Activo &&
                 !c.Eliminado &&
-                c.IdAsesor == idAsesor);
+                (rolUsuario == "Administrador" || c.IdAsesor == idAsesor));
 
         if (cliente == null)
         {
             return NotFound(new
             {
-                message = "Cliente no encontrado o no pertenece al asesor."
+                message = "Cliente no encontrado o no tienes acceso a este cliente."
             });
         }
 

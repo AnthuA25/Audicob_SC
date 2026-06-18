@@ -1,4 +1,5 @@
 import { useState } from "react";
+import useAuth from "../../hooks/useAuth";
 import {
   ArrowLeft,
   Mail,
@@ -22,6 +23,7 @@ const formatoMoneda = (valor) => `S/. ${Number(valor ?? 0).toLocaleString()}`;
 const MiClienteDetallePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { cliente, loading, error, cargarDetalle } = useMiClienteDetalle(id);
 
   const [tabActiva, setTabActiva] = useState("bitacora");
@@ -96,7 +98,11 @@ const MiClienteDetallePage = () => {
         <div className="detalle-header-left">
           <button
             className="detalle-back"
-            onClick={() => navigate("/mis-clientes")}
+            onClick={() =>
+              navigate(
+                user?.rol === "Administrador" ? "/morosidad" : "/mis-clientes",
+              )
+            }
           >
             <ArrowLeft size={16} /> Volver
           </button>

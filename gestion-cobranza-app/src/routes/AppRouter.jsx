@@ -115,7 +115,7 @@ const AppRouter = () => {
           <Route
             path={ROUTES.MIS_CLIENTES_DETALLE}
             element={
-              <ProtectedRoute allowedRoles={["Asesor"]}>
+              <ProtectedRoute allowedRoles={["Administrador","Asesor"]}>
                 <MiClienteDetallePage />
               </ProtectedRoute>
             }

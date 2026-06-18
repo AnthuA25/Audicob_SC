@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Search,
   FileBarChart,
@@ -15,7 +16,9 @@ import {
 } from "../../components/clientes/ClienteEstadoBadge";
 import "../../styles/morosidad.css";
 
+
 const MorosidadPage = () => {
+  const navigate = useNavigate();
   const { morosidad, metricas, loading, error } = useMorosidad();
   const [busqueda, setBusqueda] = useState("");
 
@@ -146,7 +149,7 @@ const MorosidadPage = () => {
                   <EstadoBadge estado={m.estado} />
                 </td>
                 <td>
-                  <button className="btn-ver">
+                  <button className="btn-ver" onClick={() => navigate(`/mis-clientes/${m.id}`)}>
                     <Eye size={15} />
                   </button>
                 </td>
