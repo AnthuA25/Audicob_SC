@@ -47,6 +47,8 @@ const ClienteForm = ({
         direccion: clienteEditar.direccion || "",
         idAsesor: clienteEditar.idAsesor || "",
         observacion: clienteEditar.observacion || "",
+        montoDeuda: clienteEditar.deudaTotal || "",
+        fechaVencimiento: clienteEditar.fechaVencimiento || "",
       });
     }
   }, [clienteEditar]);
@@ -111,11 +113,11 @@ const ClienteForm = ({
       telefono: form.telefono.trim(),
       direccion: form.direccion.trim(),
       observacion: form.observacion.trim(),
-      montoDeuda: !clienteEditar ? Number(form.montoDeuda) : undefined,
+      montoDeuda: form.montoDeuda ? Number(form.montoDeuda) : undefined,
       fechaEmision: !clienteEditar
         ? new Date().toISOString().split("T")[0]
         : undefined,
-      fechaVencimiento: !clienteEditar ? form.fechaVencimiento : undefined,
+      fechaVencimiento: form.fechaVencimiento || undefined,
       descripcionDeuda: !clienteEditar
         ? "Deuda inicial del cliente"
         : undefined,
@@ -212,36 +214,34 @@ const ClienteForm = ({
           )}
         </div>
 
-        {!clienteEditar && (
-          <div className="form-row">
-            <div className="form-field">
-              <label>Deuda Total *</label>
-              <input
-                type="number"
-                name="montoDeuda"
-                value={form.montoDeuda}
-                onChange={handleChange}
-                placeholder="Ej. 15000"
-              />
-              {errores.montoDeuda && (
-                <span className="form-error">{errores.montoDeuda}</span>
-              )}
-            </div>
-
-            <div className="form-field">
-              <label>Fecha de Pago *</label>
-              <input
-                type="date"
-                name="fechaVencimiento"
-                value={form.fechaVencimiento}
-                onChange={handleChange}
-              />
-              {errores.fechaVencimiento && (
-                <span className="form-error">{errores.fechaVencimiento}</span>
-              )}
-            </div>
+        <div className="form-row">
+          <div className="form-field">
+            <label>Deuda Total *</label>
+            <input
+              type="number"
+              name="montoDeuda"
+              value={form.montoDeuda}
+              onChange={handleChange}
+              placeholder="Ej. 15000"
+            />
+            {errores.montoDeuda && (
+              <span className="form-error">{errores.montoDeuda}</span>
+            )}
           </div>
-        )}
+
+          <div className="form-field">
+            <label>Fecha de Pago *</label>
+            <input
+              type="date"
+              name="fechaVencimiento"
+              value={form.fechaVencimiento}
+              onChange={handleChange}
+            />
+            {errores.fechaVencimiento && (
+              <span className="form-error">{errores.fechaVencimiento}</span>
+            )}
+          </div>
+        </div>
 
         <div className="form-field">
           <label>Observación</label>

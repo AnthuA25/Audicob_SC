@@ -284,6 +284,9 @@ public class ClientesController : ControllerBase
                 return BadRequest(new { message = "El asesor asignado no existe o no tiene rol Asesor." });
         }
 
+        if (dto.MontoDeuda.HasValue && dto.MontoDeuda.Value <= 0)
+            return BadRequest(new { message = "La deuda total debe ser mayor a 0." });
+
         cliente.IdAsesor = dto.IdAsesor;
         cliente.Nombres = dto.Nombres.Trim();
         cliente.Apellidos = dto.Apellidos.Trim();
@@ -296,6 +299,31 @@ public class ClientesController : ControllerBase
         cliente.Observacion = dto.Observacion?.Trim();
         cliente.FechaModificacion = DateTime.Now;
         cliente.UsuarioModificacion = User.Identity?.Name ?? "system";
+
+        if (dto.MontoDeuda.HasValue)
+        {
+            var deuda = cliente.Deuda
+                .Where(d => d.Activo && !d.Eliminado)
+                .OrderByDescending(d => d.IdDeuda)
+                .FirstOrDefault();
+
+            if (deuda != null)
+            {
+                var diferencia = dto.MontoDeuda.Value - deuda.MontoTotal;
+
+                deuda.MontoTotal = dto.MontoDeuda.Value;
+                deuda.SaldoPendiente += diferencia;
+
+                if (deuda.SaldoPendiente < 0)
+                    deuda.SaldoPendiente = 0;
+
+                if (dto.FechaVencimiento.HasValue)
+                    deuda.FechaVencimiento = dto.FechaVencimiento.Value;
+
+                deuda.FechaModificacion = DateTime.Now;
+                deuda.UsuarioModificacion = User.Identity?.Name ?? "system";
+            }
+        }
 
         await _context.SaveChangesAsync();
 
