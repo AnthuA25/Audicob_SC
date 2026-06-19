@@ -60,6 +60,10 @@ El proyecto está conformado por:
 - C#
 - Entity Framework Core
 - PostgreSQL
+- JWT Authentication
+- BCrypt
+- Swagger / OpenAPI
+- ClosedXML
 
 ---
 
